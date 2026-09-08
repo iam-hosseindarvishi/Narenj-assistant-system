@@ -1,0 +1,21 @@
+# Sensitive / excluded from git
+exelcs inputs/
+CLAUDE.md
+tasks/
+
+# Node
+node_modules/
+dist/
+.env
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Electron
+out/
+
+# SQLite DB (built at runtime)
+*.db
+*.db-journal
