@@ -1,0 +1,56 @@
+{
+  "name": "narenj-reconciliation",
+  "version": "1.0.0",
+  "description": "Narenj Financial Reconciliation System",
+  "main": "dist-electron/main.js",
+  "author": "Narenj",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "vue-tsc --noEmit",
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
+    "package": "npm run build && electron-builder"
+  },
+  "dependencies": {
+    "@mdi/font": "^7.4.47",
+    "better-sqlite3": "^11.1.2",
+    "jalaali-js": "^1.2.7",
+    "pinia": "^2.2.2",
+    "vue": "^3.4.38",
+    "vuetify": "^3.7.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.6.0",
+    "@types/node": "^20.14.10",
+    "@vitejs/plugin-vue": "^5.1.2",
+    "@vue/test-utils": "^2.4.6",
+    "electron": "^31.3.1",
+    "electron-builder": "^24.13.3",
+    "jsdom": "^24.1.1",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.1",
+    "vite-plugin-electron": "^0.28.6",
+    "vite-plugin-vuetify": "^2.0.4",
+    "vitest": "^2.0.5",
+    "vue-tsc": "^2.0.29"
+  },
+  "build": {
+    "appId": "com.narenj.reconciliation",
+    "productName": "Narenj Reconciliation",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    }
+  }
+}
