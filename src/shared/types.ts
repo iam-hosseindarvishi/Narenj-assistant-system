@@ -84,3 +84,43 @@ export interface ReconciliationResult {
 }
 
 export type ServiceResult<T> = { ok: true; data: T } | { ok: false; error: string }
+
+export enum TemplateType {
+  Bank = 'bank',
+  PosSummary = 'pos_summary',
+  PosDetail = 'pos_detail',
+  Accounting = 'accounting'
+}
+
+export interface CleanupRules {
+  readonly skipTopRows: number[]
+  readonly skipBottomRows: number
+  readonly headerRow: number
+}
+
+export interface ExtractionRule {
+  readonly field: string
+  readonly pattern: string
+  readonly mode: 'regex' | 'formula'
+}
+
+export interface Template {
+  readonly id: number
+  readonly name: string
+  readonly type: TemplateType
+  readonly bankId: number | null
+  readonly columnMapping: Record<string, string>
+  readonly cleanupRules: CleanupRules
+  readonly extractionRules: ExtractionRule[]
+  readonly createdBy: number | null
+  readonly createdAt: string
+}
+
+export interface CreateTemplateInput {
+  readonly name: string
+  readonly type: TemplateType
+  readonly bankId: number | null
+  readonly columnMapping: Record<string, string>
+  readonly cleanupRules: CleanupRules
+  readonly extractionRules: ExtractionRule[]
+}
