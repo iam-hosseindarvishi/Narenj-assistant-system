@@ -60,16 +60,16 @@ describe('TemplateRepository', () => {
   it('should preserve column mapping through create and read', () => {
     const created = repo.create(DEFAULT_TEMPLATES[0])
     const found = repo.getById(created.id)
-    expect(found?.columnMapping.date).toBe('B')
-    expect(found?.columnMapping.deposit).toBe('H')
+    expect(found?.columnMapping.date).toBe('L')
+    expect(found?.columnMapping.deposit).toBe('G')
   })
 
   it('should preserve cleanup rules through create and read', () => {
     const created = repo.create(DEFAULT_TEMPLATES[0])
     const found = repo.getById(created.id)
-    expect(found?.cleanupRules.skipTopRows).toContain(8)
-    expect(found?.cleanupRules.headerRow).toBe(9)
-    expect(found?.cleanupRules.skipBottomRows).toBe(2)
+    expect(found?.cleanupRules.skipTopRows).toContain(1)
+    expect(found?.cleanupRules.headerRow).toBe(1)
+    expect(found?.cleanupRules.skipBottomRows).toBe(0)
   })
 
   it('should preserve extraction rules through create and read', () => {
@@ -115,9 +115,9 @@ describe('TemplateSeeder', () => {
     const all = repo.getAll()
     const bankTpl = all.find(t => t.type === TemplateType.Bank)
     expect(bankTpl).toBeDefined()
-    expect(bankTpl?.cleanupRules.skipTopRows).toEqual([1, 2, 3, 4, 5, 6, 8])
-    expect(bankTpl?.cleanupRules.headerRow).toBe(9)
-    expect(bankTpl?.cleanupRules.skipBottomRows).toBe(2)
+    expect(bankTpl?.cleanupRules.skipTopRows).toEqual([1])
+    expect(bankTpl?.cleanupRules.headerRow).toBe(1)
+    expect(bankTpl?.cleanupRules.skipBottomRows).toBe(0)
   })
 
   it('should seed Mohkam accounting template with extraction rules', () => {

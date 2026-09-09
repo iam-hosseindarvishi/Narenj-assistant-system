@@ -7,22 +7,24 @@ export const DEFAULT_TEMPLATES: CreateTemplateInput[] = [
     type: TemplateType.Bank,
     bankId: null,
     columnMapping: {
-      rowNumber: 'A',
-      date: 'B',
-      time: 'C',
-      branchCode: 'D',
-      reference: 'E',
-      payerPayee: 'F',
-      depositRef: 'G',
-      deposit: 'H',
-      withdrawal: 'I',
-      balance: 'J',
-      misc: 'K'
+      rowNumber: 'M',
+      date: 'L',
+      time: 'K',
+      branchCode: 'I',
+      reference: 'J',
+      payerPayee: 'E',
+      depositRef: 'A',
+      description: 'B',
+      deposit: 'G',
+      withdrawal: 'H',
+      balance: 'F',
+      depositTracking: 'C',
+      id: 'D'
     },
     cleanupRules: {
-      skipTopRows: [1, 2, 3, 4, 5, 6, 8],
-      skipBottomRows: 2,
-      headerRow: 9
+      skipTopRows: [1],
+      skipBottomRows: 0,
+      headerRow: 1
     },
     extractionRules: [
       {
