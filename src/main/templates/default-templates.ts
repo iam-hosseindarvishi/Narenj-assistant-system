@@ -1,8 +1,9 @@
-import type { CreateTemplateInput } from '../../shared/types'
+import type { Template } from '../../shared/types'
 import { TemplateType } from '../../shared/types'
 
-export const DEFAULT_TEMPLATES: CreateTemplateInput[] = [
+export const DEFAULT_TEMPLATES: Template[] = [
   {
+    id: 1,
     name: 'Bank Keshavarzi',
     type: TemplateType.Bank,
     bankId: null,
@@ -40,6 +41,7 @@ export const DEFAULT_TEMPLATES: CreateTemplateInput[] = [
     ]
   },
   {
+    id: 2,
     name: 'POS Summary (Behpardakht)',
     type: TemplateType.PosSummary,
     bankId: null,
@@ -59,6 +61,7 @@ export const DEFAULT_TEMPLATES: CreateTemplateInput[] = [
     extractionRules: []
   },
   {
+    id: 3,
     name: 'POS Detail (Behpardakht)',
     type: TemplateType.PosDetail,
     bankId: null,
@@ -78,6 +81,7 @@ export const DEFAULT_TEMPLATES: CreateTemplateInput[] = [
     extractionRules: []
   },
   {
+    id: 4,
     name: 'Mohkam Accounting',
     type: TemplateType.Accounting,
     bankId: null,

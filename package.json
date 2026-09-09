@@ -2,7 +2,7 @@
   "name": "narenj-reconciliation",
   "version": "1.0.0",
   "description": "Narenj Financial Reconciliation System",
-  "main": "dist-electron/main.js",
+  "main": "dist-electron/index.js",
   "author": "Narenj",
   "scripts": {
     "dev": "vite",
@@ -54,6 +54,21 @@
       "target": [
         "nsis"
       ]
-    }
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ]
+    },
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "electronLanguages": [
+      "en-US",
+      "fa"
+    ]
   }
 }

@@ -10,5 +10,5 @@
   {"id":9,"task":"09-manual-matching","file":"sub-tasks/09-manual-matching.json","description":"Manual reconciliation (dynamic 2/3 columns)","status":"pending"},
   {"id":10,"task":"10-users-audit","file":"sub-tasks/10-users-audit.json","description":"Multi-user auth + audit trail","status":"pending"},
   {"id":11,"task":"11-dashboard-reports","file":"sub-tasks/11-dashboard-reports.json","description":"Dashboard + PDF/Excel reports","status":"pending"},
-  {"id":12,"task":"12-final-qa-package","file":"sub-tasks/12-final-qa-package.json","description":"Final QA, packaging, docs","status":"pending"}
+  {"id":12,"task":"12-final-qa-package","file":"sub-tasks/12-final-qa-package.json","description":"Final QA, packaging, docs","status":"done"}
 ]

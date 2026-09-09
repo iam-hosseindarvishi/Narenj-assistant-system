@@ -1,56 +1,55 @@
 # Narenj Financial Reconciliation System
 
-A desktop application for reconciling POS transactions, bank statements, and accounting records.
+Desktop application for reconciling POS transactions, Keshavarzi bank statements, and Mohkam accounting records across four reconciliation layers.
 
-## Getting started
+## Features
+
+- Persian RTL interface built with Vue 3 and Vuetify 3
+- Excel `.xls` and `.xlsx` import using configurable templates
+- Four-layer reconciliation for POS, bank, fees, and accounting records
+- Manual matching, users, audit trail, and PDF/Excel reporting
+- Electron desktop packaging for Windows NSIS, macOS DMG, and Linux AppImage
+
+## Development setup
+
+Requirements: Node.js 20 or newer and npm.
 
 ```bash
-# 1. Run the setup script (one-time)
-bash setup.sh
-
-# 2. Copy tasks/master-prompt.md into OpenCode as your first message
-#    Model: Kimi K2.5 (recommended for 1M context + strong code generation)
-#    OR: GLM 5.2 (strong for multi-step TypeScript projects)
+npm install
+npm run dev
 ```
 
-## Project structure
+Run verification and production builds with:
 
-```
-.
-├── exelcs inputs/       # Test fixtures (git-ignored)
-│   ├── Bank.xls
-│   ├── pos_summarize.xlsx
-│   ├── pos_transactions.xlsx
-│   └── System.xls
-├── tasks/
-│   ├── master-task.md      # Full spec (the "brain" of the project)
-│   ├── master-prompt.md    # Copy-paste prompt for OpenCode
-│   ├── ai-rules.md         # Environment rules + conventions
-│   ├── sub-tasks.json      # Task queue (pending/done tracking)
-│   └── sub-tasks/          # Individual task files
-│       ├── 01-project-init.json
-│       ├── ...
-│       └── 12-final-qa-package.json
-├── src/                   # Source code (created by the agent)
-├── .gitignore
-└── setup.sh
+```bash
+npm test
+npm run lint
+npm run build
+npm run package
 ```
 
-## Tasks (12 steps)
+Package artifacts are written to `release/`. The application stores its SQLite database in Electron's per-user application data directory.
 
-1. Initialize Electron + Vue 3 project
-2. SQLite database schema
-3. Template engine (simple + advanced)
-4. File upload + Excel parsing
-5. Layer 1: POS summary ↔ Bank
-6. Layer 2: Fee collection
-7. Layer 3: Non-POS bank ↔ Accounting
-8. Layer 4: POS detail ↔ Accounting
-9. Manual reconciliation window
-10. Multi-user auth + audit
-11. Dashboard + reports
-12. Final QA + packaging
+## Stack
+
+- Electron
+- Vue 3, Vite, TypeScript
+- Vuetify 3 and Pinia
+- better-sqlite3
+- SheetJS (`xlsx`)
+- jalaali-js
+- Vitest
+- electron-builder
+
+## Project layout
+
+- `src/main/`: Electron main process, database, importers, reconciliation, authentication, and audit services
+- `src/renderer/`: Vue application and views
+- `src/shared/`: shared types, constants, and Jalali date utilities
+- `migrations/`: SQLite schema migrations
+- `tests/`: unit tests
+- `docs/user-guide-fa.md`: Persian user guide
 
 ## License
 
-TBD — planned for open-source release.
+TBD — planned for future open-source release.

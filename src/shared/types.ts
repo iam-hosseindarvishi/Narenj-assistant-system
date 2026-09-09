@@ -88,7 +88,7 @@ export interface ReconciliationResult {
   readonly links: ReconciliationLink[]
 }
 
-export type ServiceResult<T> = { ok: true; data: T } | { ok: false; error: string }
+export type ServiceResult<T> = { ok: boolean; data?: T; error?: string }
 
 export enum UserRole {
   Admin = 'admin',
@@ -123,8 +123,8 @@ export interface Template {
   readonly columnMapping: Record<string, string>
   readonly cleanupRules: CleanupRules
   readonly extractionRules: ExtractionRule[]
-  readonly createdBy: number | null
-  readonly createdAt: string
+  readonly createdBy?: number | null
+  readonly createdAt?: string
 }
 
 export interface CreateTemplateInput {

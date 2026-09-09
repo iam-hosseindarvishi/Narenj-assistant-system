@@ -13,6 +13,14 @@ interface Window {
   }
 }
 
+declare module 'jalaali-js' {
+  export function toGregorian(year: number, month: number, day: number): { gy: number; gm: number; gd: number }
+  export function toJalaali(year: number, month: number, day: number): { jy: number; jm: number; jd: number }
+  export function isValidJalaaliDate(year: number, month: number, day: number): boolean
+  export function j2d(year: number, month: number, day: number): number
+  export function d2j(jdn: number): { jy: number; jm: number; jd: number }
+}
+
 declare module '*.vue' {
   import type { DefineComponent } from 'vue'
   const component: DefineComponent<Record<string, never>, Record<string, never>, unknown>

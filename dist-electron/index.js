@@ -1,42 +1,8 @@
-"use strict";
-const electron = require("electron");
-const path = require("path");
-const isDev = !electron.app.isPackaged;
-function createWindow() {
-  const mainWindow = new electron.BrowserWindow({
-    width: 1200,
-    height: 800,
-    show: false,
-    webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
-      contextIsolation: true,
-      nodeIntegration: false
-    }
-  });
-  mainWindow.on("ready-to-show", () => {
-    mainWindow.show();
-  });
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    void electron.shell.openExternal(url);
-    return { action: "deny" };
-  });
-  if (isDev) {
-    void mainWindow.loadURL("http://localhost:5173");
-    mainWindow.webContents.openDevTools();
-  } else {
-    void mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
-  }
-}
-electron.app.whenReady().then(() => {
-  createWindow();
-  electron.app.on("activate", () => {
-    if (electron.BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-});
-electron.app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    electron.app.quit();
-  }
-});
+"use strict";var _=Object.defineProperty;var E=(i,n,e)=>n in i?_(i,n,{enumerable:!0,configurable:!0,writable:!0,value:e}):i[n]=e;var l=(i,n,e)=>E(i,typeof n!="symbol"?n+"":n,e);const r=require("electron"),p=require("path"),d=require("crypto"),m=require("fs"),f=require("better-sqlite3");class S{constructor(n){l(this,"conn");this.conn=n}list(n={}){return[...n.system==="accounting"||n.system==="pos"?[]:this.bank(n),...n.system==="bank"||n.system==="pos"?[]:this.accounting(n),...n.system==="bank"||n.system==="accounting"?[]:this.pos(n)].sort((t,s)=>t.dateJalali.localeCompare(s.dateJalali))}link(n,e=null){if(n.length<2)throw new Error("At least two records are required");const t={bank:null,accounting:null,pos:null};for(const o of n)t[o.system]=o.id;const s=t.pos!==null?4:t.bank!==null&&t.accounting!==null?3:1,a=this.conn.prepare(`INSERT INTO reconciliation_links
+      (layer, bank_tx_id, pos_tx_id, accounting_id, match_type, confidence, created_by, note)
+      VALUES (?, ?, ?, ?, 'manual', 1.0, ?, 'Manual reconciliation')`).run(s,t.bank,t.pos,t.accounting,e);return this.setStatuses(t,"manual"),this.audit("manual-link",n[0].id,e,{selection:n}),Number(a.lastInsertRowid)}unlink(n,e=null){const t=this.conn.prepare("SELECT * FROM reconciliation_links WHERE id = ?").get(n);if(!t)throw new Error("Link not found");this.conn.prepare("DELETE FROM reconciliation_links WHERE id = ?").run(n);const s={bank:t.bank_tx_id,accounting:t.accounting_id,pos:t.pos_tx_id};this.setStatuses(s,"unmatched"),this.audit("manual-unlink",n,e,{linkId:n})}bank(n){return this.rows("bank_transactions",n).map(t=>({id:t.id,system:"bank",dateJalali:t.date_jalali,amount:t.deposit_amount||t.withdrawal_amount,label:t.description||t.reference||"",status:t.status,suggestion:this.suggested(t.id,"bank_transactions")}))}accounting(n){return this.rows("accounting_entries",n).map(t=>({id:t.id,system:"accounting",dateJalali:t.date_jalali,amount:t.credit||t.debit,label:t.description||String(t.entry_id),status:t.status,suggestion:this.suggested(t.id,"accounting_entries")}))}pos(n){return this.rows("pos_transactions",n).map(t=>({id:t.id,system:"pos",dateJalali:t.date_jalali||"",amount:t.amount,label:`${t.branch_name||""} ${t.ref_number}`,status:t.status,suggestion:this.suggested(t.id,"pos_transactions")}))}rows(n,e){const t=[],s=["status = 'unmatched'"];return e.from&&(s.push("date_jalali >= ?"),t.push(e.from)),e.to&&(s.push("date_jalali <= ?"),t.push(e.to)),this.conn.prepare(`SELECT * FROM ${n} WHERE ${s.join(" AND ")} ORDER BY date_jalali`).all(...t)}suggested(n,e){return!!this.conn.prepare(`SELECT 1 FROM reconciliation_links WHERE match_type = 'suggested' AND ${e==="bank_transactions"?"bank_tx_id":e==="accounting_entries"?"accounting_id":"pos_tx_id"} = ?`).get(n)}setStatuses(n,e){n.bank!==null&&this.conn.prepare("UPDATE bank_transactions SET status = ? WHERE id = ?").run(e,n.bank),n.accounting!==null&&this.conn.prepare("UPDATE accounting_entries SET status = ? WHERE id = ?").run(e,n.accounting),n.pos!==null&&this.conn.prepare("UPDATE pos_transactions SET status = ? WHERE id = ?").run(e,n.pos)}audit(n,e,t,s){this.conn.prepare("INSERT INTO audit_logs (user_id, action, entity_type, entity_id, new_value) VALUES (?, ?, ?, ?, ?)").run(t,n,"reconciliation_links",e,JSON.stringify(s))}}var h=(i=>(i.Admin="admin",i.Operator="operator",i.Viewer="viewer",i))(h||{});class w{constructor(n){l(this,"conn");l(this,"sessions",new Map);this.conn=n,this.seedAdmin()}login(n,e){const t=this.conn.prepare("SELECT id, username, password_hash, role FROM users WHERE username = ?").get(n);if(!t||!this.verify(e,t.password_hash))throw new Error("نام کاربری یا رمز عبور نادرست است");const s={id:t.id,username:t.username,role:t.role,forcePasswordChange:e==="admin123"},a=d.randomBytes(32).toString("hex");return this.sessions.set(a,s),{user:s,token:a}}getSession(n){return this.sessions.get(n)??null}logout(n){this.sessions.delete(n)}can(n,e){return n.role===h.Admin||e==="read"?!0:e==="write"&&n.role===h.Operator}changePassword(n,e){this.conn.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(this.hash(e),n)}seedAdmin(){this.conn.prepare("SELECT id FROM users WHERE username = ?").get("admin")||this.conn.prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)").run("admin",this.hash("admin123"),h.Admin)}hash(n){const e=d.randomBytes(16).toString("hex");return`${e}:${d.scryptSync(n,e,64).toString("hex")}`}verify(n,e){const[t,s]=e.split(":");if(!t||!s)return!1;const a=Buffer.from(s,"hex"),o=d.scryptSync(n,t,a.length);return a.length===o.length&&d.timingSafeEqual(a,o)}}class T{constructor(n){l(this,"conn");this.conn=n}list(){return this.conn.prepare("SELECT id, username, role, created_at as createdAt FROM users ORDER BY username").all()}create(n,e,t){const s=this.conn.prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)").run(n,e,t);return Number(s.lastInsertRowid)}updateRole(n,e){this.conn.prepare("UPDATE users SET role = ? WHERE id = ?").run(e,n)}remove(n){this.conn.prepare("DELETE FROM users WHERE id = ?").run(n)}}class R{constructor(n){l(this,"conn");this.conn=n}log(n,e,t,s,a,o){this.conn.prepare("INSERT INTO audit_logs (user_id, action, entity_type, entity_id, old_value, new_value) VALUES (?, ?, ?, ?, ?, ?)").run(n,e,t,s,this.json(a),this.json(o))}list(n={}){const e=[],t=[];n.userId!==void 0&&(e.push("user_id = ?"),t.push(n.userId)),n.action&&(e.push("action = ?"),t.push(n.action)),n.entityType&&(e.push("entity_type = ?"),t.push(n.entityType)),n.from&&(e.push("timestamp >= ?"),t.push(n.from)),n.to&&(e.push("timestamp <= ?"),t.push(n.to));const s=e.length>0?`WHERE ${e.join(" AND ")}`:"";return this.conn.prepare(`SELECT id, user_id as userId, action, entity_type as entityType, entity_id as entityId, old_value as oldValue, new_value as newValue, timestamp FROM audit_logs ${s} ORDER BY timestamp DESC`).all(...t)}json(n){return n==null?null:JSON.stringify(n)}}class b{constructor(n){l(this,"db");this.db=n}prepare(n){const e=this.db.prepare(n);return{run:(...t)=>e.run(...t),get:(...t)=>e.get(...t),all:(...t)=>e.all(...t)}}exec(n){this.db.exec(n)}transaction(n){return this.db.transaction(n)()}close(){this.db.close()}pragma(n){return this.db.pragma(n)}}class y{constructor(n){l(this,"conn");this.conn=n,this.conn.pragma("journal_mode = WAL"),this.conn.pragma("foreign_keys = ON")}getConnection(){return this.conn}runMigrations(n){const e=m.readdirSync(n).filter(a=>a.endsWith(".sql")).sort();this.conn.exec(`
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        filename TEXT PRIMARY KEY,
+        applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);const t=this.conn.prepare("SELECT filename FROM schema_migrations").all(),s=new Set(t.map(a=>a.filename));for(const a of e){if(s.has(a))continue;const o=m.readFileSync(p.join(n,a),"utf-8");this.conn.exec(o),this.conn.prepare("INSERT INTO schema_migrations (filename) VALUES (?)").run(a)}}prepare(n){return this.conn.prepare(n)}exec(n){this.conn.exec(n)}transaction(n){return this.conn.transaction(n)}close(){this.conn.close()}}const k=!r.app.isPackaged;let c=null;function A(){const i=new f(p.join(r.app.getPath("userData"),"narenj.db")),n=new y(new b(i));n.runMigrations(p.join(__dirname,"../../migrations")),c=new S(n.getConnection());const e=new w(n.getConnection()),t=new T(n.getConnection()),s=new R(n.getConnection());r.ipcMain.handle("auth:login",(a,o,u)=>e.login(o,u)),r.ipcMain.handle("auth:logout",(a,o)=>e.logout(o)),r.ipcMain.handle("users:list",()=>t.list()),r.ipcMain.handle("audit:list",(a,o)=>s.list(o)),r.ipcMain.handle("manual:list",(a,o)=>(c==null?void 0:c.list(o))??[]),r.ipcMain.handle("manual:link",(a,o,u)=>c==null?void 0:c.link(o,u)),r.ipcMain.handle("manual:unlink",(a,o,u)=>c==null?void 0:c.unlink(o,u))}function g(){const i=new r.BrowserWindow({width:1200,height:800,show:!1,webPreferences:{preload:p.join(__dirname,"preload.js"),contextIsolation:!0,nodeIntegration:!1}});i.on("ready-to-show",()=>{i.show()}),i.webContents.setWindowOpenHandler(({url:n})=>(r.shell.openExternal(n),{action:"deny"})),k?(i.loadURL("http://localhost:5173"),i.webContents.openDevTools()):i.loadFile(p.join(__dirname,"../dist/index.html"))}r.app.whenReady().then(()=>{A(),g(),r.app.on("activate",()=>{r.BrowserWindow.getAllWindows().length===0&&g()})});r.app.on("window-all-closed",()=>{process.platform!=="darwin"&&r.app.quit()});

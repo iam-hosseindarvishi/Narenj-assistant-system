@@ -6,7 +6,7 @@
       <v-table><thead><tr><th>بخش</th><th>کل</th><th>تطبیق‌شده</th><th>باقی‌مانده</th></tr></thead><tbody><tr v-for="row in rows" :key="row.section"><td>{{ row.section }}</td><td>{{ row.total }}</td><td>{{ row.matched }}</td><td>{{ row.total - row.matched }}</td></tr></tbody></v-table>
       <v-alert class="mt-4" type="info" variant="tonal">کارمزد ثبت‌نشده: {{ fee.toLocaleString('fa-IR') }} تومان</v-alert>
       <div class="d-flex ga-2 mt-4"><v-btn color="primary" @click="print">چاپ / PDF</v-btn><v-btn variant="tonal" @click="exportExcel">خروجی Excel</v-btn></div>
-    </v-card>
+    </v-card-text></v-card>
   </v-container>
 </template>
 

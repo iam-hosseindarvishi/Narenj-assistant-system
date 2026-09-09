@@ -1,5 +1,5 @@
 import type { IDatabaseConnection } from '../database/connection'
-import type { Template } from '../../shared/types'
+import type { Template, CreateTemplateInput } from '../../shared/types'
 import { TemplateType } from '../../shared/types'
 import { ExcelReader } from '../adapters/excel-reader'
 import { KeshavarziAdapter } from '../adapters/keshavarzi-adapter'
@@ -33,9 +33,10 @@ export class FileImporter {
       const rows = this.excelReader.readSheet(filePath)
       totalRows = rows.length
 
+      const templateId = template.id
       const fileResult = this.conn.prepare(
         'INSERT INTO uploaded_files (template_id, original_filename, stored_path, uploaded_by) VALUES (?, ?, ?, ?)'
-      ).run(template.id, filePath, filePath, uploadedBy)
+      ).run(templateId, filePath, filePath, uploadedBy)
       const fileId = Number(fileResult.lastInsertRowid)
 
       if (template.type === TemplateType.Bank) {
