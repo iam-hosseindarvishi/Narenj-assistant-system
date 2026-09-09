@@ -61,6 +61,10 @@ function registerIpcHandlers(manager: DatabaseManager): void {
     users.updateRole(userId, role as UserRole)
     audit.log(userId, 'user-update', 'users', userId, null, { role })
   })
+  ipcMain.handle('users:reset-password', (_event, userId: number, password: string) => {
+    auth.changePassword(userId, password)
+    audit.log(userId, 'user-reset-password', 'users', userId, null, null)
+  })
   ipcMain.handle('users:remove', (_event, userId: number) => {
     users.remove(userId)
     audit.log(userId, 'user-remove', 'users', userId, null, null)

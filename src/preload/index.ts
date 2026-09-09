@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('api', {
     list: () => ipcRenderer.invoke('users:list'),
     create: (username: string, password: string, role: string) => ipcRenderer.invoke('users:create', username, password, role),
     update: (userId: number, role: string) => ipcRenderer.invoke('users:update', userId, role),
+    resetPassword: (userId: number, password: string) => ipcRenderer.invoke('users:reset-password', userId, password),
     remove: (userId: number) => ipcRenderer.invoke('users:remove', userId)
   },
   audit: { list: (filter = {}) => ipcRenderer.invoke('audit:list', filter) },

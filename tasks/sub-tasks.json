@@ -67,7 +67,7 @@
     "task": "10-users-audit",
     "file": "sub-tasks/10-users-audit.json",
     "description": "Complete Users CRUD, Audit viewer, Login with session",
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": 11,

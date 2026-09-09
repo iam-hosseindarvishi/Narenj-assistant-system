@@ -113,9 +113,10 @@ interface Window {
       list: () => Promise<Array<{ id: number; username: string; role: string; createdAt: string }>>
       create: (username: string, password: string, role: string) => Promise<number>
       update: (userId: number, role: string) => Promise<void>
+      resetPassword: (userId: number, password: string) => Promise<void>
       remove: (userId: number) => Promise<void>
     }
-    audit: { list: (filter?: Record<string, string | number | undefined>) => Promise<Array<{ id: number; userId: number | null; action: string; entityType: string; entityId: number | null; timestamp: string }>> }
+    audit: { list: (filter?: Record<string, string | number | undefined>) => Promise<Array<{ id: number; userId: number | null; action: string; entityType: string; entityId: number | null; oldValue: string | null; newValue: string | null; timestamp: string }>> }
     templates: {
       list: () => Promise<TemplateDto[]>
       get: (id: number) => Promise<TemplateDto | null>
