@@ -87,6 +87,7 @@ export interface DashboardStats {
   layer3: StatusCounts
   layer4: StatusCounts
   unregisteredFeeTotal: number
+  dateFeeTotal: number | null
 }
 
 /** Reusable read queries for IPC listing endpoints. */
@@ -229,14 +230,21 @@ export class QueryHelper {
     `).all() as UploadedFileRow[]
   }
 
-  /** Aggregates per-layer status counts plus unregistered fee totals. */
-  dashboardStats(): DashboardStats {
+  /** Aggregates per-layer status counts plus fee totals, optionally scoped to one jalali date. */
+  dashboardStats(dateJalali?: string): DashboardStats {
+    const date = dateJalali && dateJalali.length > 0 ? dateJalali : undefined
+    const range = date ? `date_jalali = '${date.replace(/'/g, '')}'` : ''
     return {
-      layer1: this.counts('pos_summaries'),
-      layer2: this.feeCounts(),
-      layer3: this.counts("bank_transactions", "tx_type IN ('transfer','check','other')"),
-      layer4: this.counts('pos_transactions'),
-      unregisteredFeeTotal: Number((this.conn.prepare('SELECT COALESCE(SUM(total_amount), 0) as total FROM fee_aggregations WHERE registered = 0').get() as { total: number }).total)
+      layer1: this.counts('pos_summaries', range),
+      layer2: this.feeCounts(range),
+      layer3: this.counts("bank_transactions", range && `tx_type IN ('transfer','check','other') AND ${range}`),
+      layer4: this.counts('pos_transactions', range),
+      unregisteredFeeTotal: Number((this.conn.prepare(
+        date ? 'SELECT COALESCE(SUM(total_amount), 0) as total FROM fee_aggregations WHERE registered = 0 AND date_jalali = ?' : 'SELECT COALESCE(SUM(total_amount), 0) as total FROM fee_aggregations WHERE registered = 0'
+      ).get(...(date ? [date] : [])) as { total: number }).total),
+      dateFeeTotal: date
+        ? Number((this.conn.prepare('SELECT COALESCE(SUM(total_amount), 0) as total FROM fee_aggregations WHERE date_jalali = ?').get(date) as { total: number }).total)
+        : null
     }
   }
 
@@ -262,9 +270,10 @@ export class QueryHelper {
     return { matched, pending, unmatched, manual, total: matched + pending + unmatched + manual }
   }
 
-  private feeCounts(): StatusCounts {
+  private feeCounts(range = ''): StatusCounts {
+    const where = range ? `WHERE tx_type = 'fee' AND ${range}` : "WHERE tx_type = 'fee'"
     const rows = this.conn.prepare(
-      "SELECT status, COUNT(*) as count FROM bank_transactions WHERE tx_type = 'fee' GROUP BY status"
+      `SELECT status, COUNT(*) as count FROM bank_transactions ${where} GROUP BY status`
     ).all() as Array<{ status: string; count: number }>
     const byStatus = new Map(rows.map(r => [r.status, Number(r.count)]))
     const matched = byStatus.get('matched') ?? 0

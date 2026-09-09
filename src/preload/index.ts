@@ -49,10 +49,10 @@ contextBridge.exposeInMainWorld('api', {
     unlink: (linkId: number, userId: number | null = null) => ipcRenderer.invoke('manual:unlink', linkId, userId)
   },
   reports: {
-    generate: () => ipcRenderer.invoke('reports:generate'),
+    generate: (from?: string, to?: string) => ipcRenderer.invoke('reports:generate', from, to),
     exportPdf: () => ipcRenderer.invoke('reports:exportPdf'),
     exportExcel: () => ipcRenderer.invoke('reports:exportExcel')
   },
-  dashboard: { stats: () => ipcRenderer.invoke('dashboard:stats') },
+  dashboard: { stats: (dateJalali?: string) => ipcRenderer.invoke('dashboard:stats', dateJalali) },
   electronVersion: process.versions.electron
 })

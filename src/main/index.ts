@@ -120,8 +120,8 @@ function registerIpcHandlers(manager: DatabaseManager): void {
   ipcMain.handle('manual:link', (_event, selection, userId) => manual.link(selection, userId))
   ipcMain.handle('manual:unlink', (_event, linkId, userId) => manual.unlink(linkId, userId))
 
-  ipcMain.handle('dashboard:stats', () => queries.dashboardStats())
-  ipcMain.handle('reports:generate', () => reports.generate())
+  ipcMain.handle('dashboard:stats', (_event, dateJalali?: string) => queries.dashboardStats(dateJalali))
+  ipcMain.handle('reports:generate', (_event, from?: string, to?: string) => reports.generate(from, to))
   ipcMain.handle('reports:exportExcel', () => reports.exportExcel())
   ipcMain.handle('reports:exportPdf', () => reports.exportPdf())
 }

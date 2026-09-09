@@ -74,7 +74,7 @@
     "task": "11-dashboard-reports",
     "file": "sub-tasks/11-dashboard-reports.json",
     "description": "Dashboard real data + Reports PDF/Excel from DB",
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": 12,

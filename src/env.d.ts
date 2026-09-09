@@ -91,13 +91,21 @@ interface DashboardStatsDto {
   layer3: { matched: number; pending: number; unmatched: number; manual: number; total: number }
   layer4: { matched: number; pending: number; unmatched: number; manual: number; total: number }
   unregisteredFeeTotal: number
+  dateFeeTotal: number | null
 }
 
 interface ReportDataDto {
   generatedAt: string
+  from: string | null
+  to: string | null
   sections: Array<{ section: string; total: number; matched: number }>
-  fees: Array<{ dateJalali: string; totalAmount: number; registered: boolean }>
-  unmatched: { bank: number; accounting: number; pos: number; posSummary: number }
+  fees: Array<{ dateJalali: string; totalAmount: number; linkedCount: number; unlinkedCount: number; registered: boolean }>
+  unmatched: {
+    bank: Array<{ dateJalali: string; amount: number; label: string }>
+    accounting: Array<{ dateJalali: string; amount: number; label: string }>
+    pos: Array<{ dateJalali: string; amount: number; label: string }>
+    posSummary: Array<{ dateJalali: string; amount: number; label: string }>
+  }
   unregisteredFeeTotal: number
   auditTrail: Array<{ timestamp: string; username: string | null; action: string; entityType: string; entityId: number | null }>
 }
@@ -150,11 +158,11 @@ interface Window {
       unlink: (linkId: number, userId?: number | null) => Promise<void>
     }
     reports: {
-      generate: () => Promise<ReportDataDto>
+      generate: (from?: string, to?: string) => Promise<ReportDataDto>
       exportPdf: () => Promise<string>
       exportExcel: () => Promise<string>
     }
-    dashboard: { stats: () => Promise<DashboardStatsDto> }
+    dashboard: { stats: (dateJalali?: string) => Promise<DashboardStatsDto> }
   }
 }
 
