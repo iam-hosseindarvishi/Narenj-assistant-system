@@ -28,7 +28,11 @@ export class SqlJsConnection implements IDatabaseConnection {
       get: (...params: unknown[]) => {
         const stmt = this.db.prepare(sql)
         stmt.bind(params as never[])
-        stmt.step()
+        const hasRow = stmt.step()
+        if (!hasRow) {
+          stmt.free()
+          return undefined
+        }
         const result = stmt.getAsObject() as unknown
         stmt.free()
         return result
