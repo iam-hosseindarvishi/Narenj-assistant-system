@@ -14,7 +14,7 @@ let manualMatching: ManualMatchingService | null = null
 function registerManualMatching(): void {
   const db = new Database(join(app.getPath('userData'), 'narenj.db'))
   const manager = new DatabaseManager(new BetterSqliteConnection(db))
-  manager.runMigrations(join(__dirname, '../../migrations'))
+  manager.runMigrations(join(app.getAppPath(), 'migrations'))
   manualMatching = new ManualMatchingService(manager.getConnection())
   const auth = new AuthService(manager.getConnection())
   const users = new UserService(manager.getConnection())
