@@ -1,7 +1,22 @@
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'path'
+import { ManualMatchingService } from './services/manual-matching-service'
+import { BetterSqliteConnection } from './database/connection'
+import { DatabaseManager } from './database/database-manager'
+import Database from 'better-sqlite3'
 
 const isDev = !app.isPackaged
+let manualMatching: ManualMatchingService | null = null
+
+function registerManualMatching(): void {
+  const db = new Database(join(app.getPath('userData'), 'narenj.db'))
+  const manager = new DatabaseManager(new BetterSqliteConnection(db))
+  manager.runMigrations(join(__dirname, '../../migrations'))
+  manualMatching = new ManualMatchingService(manager.getConnection())
+  ipcMain.handle('manual:list', (_event, query) => manualMatching?.list(query) ?? [])
+  ipcMain.handle('manual:link', (_event, selection, userId) => manualMatching?.link(selection, userId))
+  ipcMain.handle('manual:unlink', (_event, linkId, userId) => manualMatching?.unlink(linkId, userId))
+}
 
 /**
  * Creates the main application window.
@@ -36,6 +51,7 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  registerManualMatching()
   createWindow()
 
   app.on('activate', () => {

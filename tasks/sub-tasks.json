@@ -1,0 +1,14 @@
+[
+  {"id":1,"task":"01-project-init","file":"sub-tasks/01-project-init.json","description":"Initialize Electron + Vue 3 project","status":"done"},
+  {"id":2,"task":"02-database-schema","file":"sub-tasks/02-database-schema.json","description":"SQLite database schema + migrations","status":"done"},
+  {"id":3,"task":"03-template-engine","file":"sub-tasks/03-template-engine.json","description":"Template engine (simple + advanced) + 4 default templates","status":"done"},
+  {"id":4,"task":"04-file-upload-parse","file":"sub-tasks/04-file-upload-parse.json","description":"File upload + Excel parsing","status":"done"},
+  {"id":5,"task":"05-layer1-pos-bank","file":"sub-tasks/05-layer1-pos-bank.json","description":"Layer 1: POS summary ↔ Bank (with aggregation + pending)","status":"done"},
+  {"id":6,"task":"06-layer2-fees","file":"sub-tasks/06-layer2-fees.json","description":"Layer 2: Fee collection + daily aggregation","status":"done"},
+  {"id":7,"task":"07-layer3-bank-accounting","file":"sub-tasks/07-layer3-bank-accounting.json","description":"Layer 3: Non-POS bank ↔ Accounting","status":"done"},
+  {"id":8,"task":"08-layer4-posdetail-accounting","file":"sub-tasks/08-layer4-posdetail-accounting.json","description":"Layer 4: POS detail ↔ Accounting (individual + aggregated)","status":"done"},
+  {"id":9,"task":"09-manual-matching","file":"sub-tasks/09-manual-matching.json","description":"Manual reconciliation (dynamic 2/3 columns)","status":"pending"},
+  {"id":10,"task":"10-users-audit","file":"sub-tasks/10-users-audit.json","description":"Multi-user auth + audit trail","status":"pending"},
+  {"id":11,"task":"11-dashboard-reports","file":"sub-tasks/11-dashboard-reports.json","description":"Dashboard + PDF/Excel reports","status":"pending"},
+  {"id":12,"task":"12-final-qa-package","file":"sub-tasks/12-final-qa-package.json","description":"Final QA, packaging, docs","status":"pending"}
+]
