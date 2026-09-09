@@ -7,6 +7,9 @@ interface Window {
       link: (selection: Array<{ system: string; id: number }>, userId?: number | null) => Promise<number>
       unlink: (linkId: number, userId?: number | null) => Promise<void>
     }
+    auth: { login: (username: string, password: string) => Promise<unknown>; logout: (token: string) => Promise<void> }
+    users: { list: () => Promise<Array<{ id: number; username: string; role: string; createdAt: string }>> }
+    audit: { list: (filter?: Record<string, string | number | undefined>) => Promise<Array<{ id: number; userId: number | null; action: string; entityType: string; entityId: number | null; timestamp: string }>> }
   }
 }
 

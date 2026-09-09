@@ -1,6 +1,9 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'path'
 import { ManualMatchingService } from './services/manual-matching-service'
+import { AuthService } from './auth/auth-service'
+import { UserService } from './auth/user-service'
+import { AuditLogger } from './services/audit-logger'
 import { BetterSqliteConnection } from './database/connection'
 import { DatabaseManager } from './database/database-manager'
 import Database from 'better-sqlite3'
@@ -13,6 +16,13 @@ function registerManualMatching(): void {
   const manager = new DatabaseManager(new BetterSqliteConnection(db))
   manager.runMigrations(join(__dirname, '../../migrations'))
   manualMatching = new ManualMatchingService(manager.getConnection())
+  const auth = new AuthService(manager.getConnection())
+  const users = new UserService(manager.getConnection())
+  const audit = new AuditLogger(manager.getConnection())
+  ipcMain.handle('auth:login', (_event, username: string, password: string) => auth.login(username, password))
+  ipcMain.handle('auth:logout', (_event, token: string) => auth.logout(token))
+  ipcMain.handle('users:list', () => users.list())
+  ipcMain.handle('audit:list', (_event, filter) => audit.list(filter))
   ipcMain.handle('manual:list', (_event, query) => manualMatching?.list(query) ?? [])
   ipcMain.handle('manual:link', (_event, selection, userId) => manualMatching?.link(selection, userId))
   ipcMain.handle('manual:unlink', (_event, linkId, userId) => manualMatching?.unlink(linkId, userId))

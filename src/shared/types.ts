@@ -90,6 +90,12 @@ export interface ReconciliationResult {
 
 export type ServiceResult<T> = { ok: true; data: T } | { ok: false; error: string }
 
+export enum UserRole {
+  Admin = 'admin',
+  Operator = 'operator',
+  Viewer = 'viewer'
+}
+
 export enum TemplateType {
   Bank = 'bank',
   PosSummary = 'pos_summary',
