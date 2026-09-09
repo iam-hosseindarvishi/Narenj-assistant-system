@@ -4,9 +4,10 @@
       <v-card-title>تطبیق لایه ۲: کارمزد‌های بانکی</v-card-title>
       <v-card-subtitle>تجمیع روزانه کارمزدها و تطبیق با اسناد حسابداری</v-card-subtitle>
       <v-card-text>
-        <v-btn color="primary" class="mb-4" @click="runReconciliation">
+        <v-btn color="primary" class="mb-4" :loading="running" @click="runReconciliation">
           اجرای تطبیق کارمزد
         </v-btn>
+        <v-alert v-if="error" type="error" class="mb-4">{{ error }}</v-alert>
 
         <v-table>
           <thead>
@@ -32,11 +33,12 @@
               <td>
                 <v-checkbox-btn
                   :model-value="item.registered"
+                  :disabled="toggling === item.dateJalali"
                   @update:model-value="(val) => toggleRegistered(item, Boolean(val))"
                 />
               </td>
               <td>
-                <v-btn size="small" variant="text" color="primary" @click="selectDate(item.dateJalali)">
+                <v-btn size="small" variant="text" color="primary" @click="selectDate(item)">
                   جزئیات
                 </v-btn>
               </td>
@@ -75,6 +77,9 @@
                   </v-chip>
                 </td>
               </tr>
+              <tr v-if="selectedDateFees.length === 0">
+                <td colspan="4" class="text-center text-medium-emphasis py-4">کارمزدی ثبت نشده است</td>
+              </tr>
             </tbody>
           </v-table>
         </v-card-text>
@@ -88,42 +93,49 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
-interface DailyFeeItem {
-  dateJalali: string
-  totalAmount: number
-  linkedCount: number
-  unlinkedCount: number
-  registered: boolean
-}
-
-interface FeeDetailItem {
-  id: number
-  amount: number
-  description: string
-  status: string
-}
-
-const dailyFees = ref<DailyFeeItem[]>([])
-const selectedDate = ref<string>('')
-const selectedDateFees = ref<FeeDetailItem[]>([])
-const detailsDialog = ref<boolean>(false)
+const dailyFees = ref<Layer2RowDto[]>([])
+const selectedDate = ref('')
+const selectedDateFees = ref<Array<{ id: number; amount: number; description: string; status: string }>>([])
+const detailsDialog = ref(false)
+const running = ref(false)
+const toggling = ref('')
+const error = ref('')
 
 function formatAmount(val: number): string {
   return (val || 0).toLocaleString('fa-IR')
 }
 
-function runReconciliation(): void {
-  // IPC call placeholder when connected
+async function load(): Promise<void> {
+  error.value = ''
+  try { dailyFees.value = await window.api.layer2.list() } catch (err) { error.value = String(err) }
 }
 
-function toggleRegistered(item: DailyFeeItem, registered: boolean): void {
-  item.registered = registered
+async function runReconciliation(): Promise<void> {
+  running.value = true
+  error.value = ''
+  try {
+    await window.api.layer2.reconcile()
+    await load()
+  } catch (err) { error.value = String(err) }
+  running.value = false
 }
 
-function selectDate(date: string): void {
-  selectedDate.value = date
+async function toggleRegistered(item: Layer2RowDto, registered: boolean): Promise<void> {
+  toggling.value = item.dateJalali
+  try {
+    await window.api.layer2.register(item.dateJalali, registered)
+    await load()
+  } catch (err) { error.value = String(err) }
+  toggling.value = ''
+}
+
+function selectDate(item: Layer2RowDto): void {
+  selectedDate.value = item.dateJalali
+  selectedDateFees.value = item.fees
   detailsDialog.value = true
 }
+
+onMounted(load)
 </script>

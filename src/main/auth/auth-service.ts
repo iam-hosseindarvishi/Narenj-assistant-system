@@ -49,6 +49,9 @@ export class AuthService {
   /** Changes a user password. */
   changePassword(userId: number, password: string): void { this.conn.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(this.hash(password), userId) }
 
+  /** Hashes a password for storage (salted scrypt). */
+  hashPassword(password: string): string { return this.hash(password) }
+
   private seedAdmin(): void {
     const exists = this.conn.prepare('SELECT id FROM users WHERE username = ?').get('admin')
     if (!exists) this.conn.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run('admin', this.hash('admin123'), UserRole.Admin)

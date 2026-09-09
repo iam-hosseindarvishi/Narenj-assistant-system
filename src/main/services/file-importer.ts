@@ -64,6 +64,29 @@ export class FileImporter {
     }
   }
 
+  /**
+   * Removes an uploaded file and every dependent record inside a transaction.
+   */
+  removeFile(fileId: number): boolean {
+    const file = this.conn.prepare('SELECT id FROM uploaded_files WHERE id = ?').get(fileId) as { id: number } | undefined
+    if (!file) return false
+    this.conn.transaction(() => {
+      this.conn.prepare(`
+        DELETE FROM reconciliation_links WHERE
+          bank_tx_id IN (SELECT id FROM bank_transactions WHERE file_id = ?) OR
+          pos_summary_id IN (SELECT id FROM pos_summaries WHERE file_id = ?) OR
+          pos_tx_id IN (SELECT id FROM pos_transactions WHERE file_id = ?) OR
+          accounting_id IN (SELECT id FROM accounting_entries WHERE file_id = ?)
+      `).run(fileId, fileId, fileId, fileId)
+      this.conn.prepare('DELETE FROM bank_transactions WHERE file_id = ?').run(fileId)
+      this.conn.prepare('DELETE FROM pos_summaries WHERE file_id = ?').run(fileId)
+      this.conn.prepare('DELETE FROM pos_transactions WHERE file_id = ?').run(fileId)
+      this.conn.prepare('DELETE FROM accounting_entries WHERE file_id = ?').run(fileId)
+      this.conn.prepare('DELETE FROM uploaded_files WHERE id = ?').run(fileId)
+    })
+    return true
+  }
+
   private importBank(rows: unknown[][], template: Template, fileId: number): number {
     const adapter = new KeshavarziAdapter()
     const normalized = adapter.parse(rows, template)

@@ -4,10 +4,11 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+const emit = defineEmits<{ success: [] }>()
 const username = ref('')
 const password = ref('')
 const error = ref('')
 async function login(): Promise<void> {
-  try { await window.api.auth.login(username.value, password.value); error.value = '' } catch (err) { error.value = String(err) }
+  try { await window.api.auth.login(username.value, password.value); error.value = ''; emit('success') } catch (err) { error.value = String(err) }
 }
 </script>

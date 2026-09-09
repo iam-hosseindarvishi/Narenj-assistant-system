@@ -79,6 +79,19 @@ export class Layer2Reconciler {
     }
   }
 
+  /**
+   * Marks a daily fee aggregation as registered (or not) with an audit entry.
+   */
+  registerFees(dateJalali: string, registered: boolean, userId: number | null = null): void {
+    this.conn.prepare(
+      'UPDATE fee_aggregations SET registered = ?, registered_by = ?, registered_at = ? WHERE date_jalali = ?'
+    ).run(registered ? 1 : 0, registered ? userId : null, registered ? new Date().toISOString() : null, dateJalali)
+    this.conn.prepare(
+      `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, new_value)
+       VALUES (?, ?, ?, NULL, ?)`
+    ).run(userId, registered ? 'fee-register' : 'fee-unregister', 'fee_aggregations', JSON.stringify({ dateJalali, registered }))
+  }
+
   private getBankFees(): BankFeeRow[] {
     return this.conn.prepare(
       `SELECT id, date_jalali as dateJalali, deposit_amount as depositAmount,

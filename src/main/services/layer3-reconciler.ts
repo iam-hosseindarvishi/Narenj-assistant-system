@@ -201,6 +201,34 @@ export class Layer3Reconciler {
     }
   }
 
+  /**
+   * Accepts a suggested layer-3 link: converts it to manual and matches both sides.
+   */
+  acceptSuggestion(linkId: number, userId: number | null = null): boolean {
+    const link = this.conn.prepare(
+      "SELECT id, bank_tx_id, accounting_id FROM reconciliation_links WHERE id = ? AND layer = 3 AND match_type = 'suggested'"
+    ).get(linkId) as { id: number; bank_tx_id: number | null; accounting_id: number | null } | undefined
+    if (!link) return false
+    this.conn.prepare(
+      "UPDATE reconciliation_links SET match_type = 'manual', confidence = 1.0, created_by = ?, note = 'User accepted suggestion' WHERE id = ?"
+    ).run(userId, linkId)
+    if (link.bank_tx_id !== null) this.updateBankStatus(link.bank_tx_id, MatchStatus.Matched)
+    if (link.accounting_id !== null) this.updateAccountingStatus(link.accounting_id, MatchStatus.Matched)
+    this.writeAuditLog('accept-suggestion', 'reconciliation_links', linkId, null, { userId })
+    return true
+  }
+
+  /**
+   * Rejects a suggested layer-3 link by deleting it; records stay unmatched.
+   */
+  rejectSuggestion(linkId: number): boolean {
+    const result = this.conn.prepare(
+      "DELETE FROM reconciliation_links WHERE id = ? AND layer = 3 AND match_type = 'suggested'"
+    ).run(linkId)
+    if (result.changes > 0) this.writeAuditLog('reject-suggestion', 'reconciliation_links', linkId, null, null)
+    return result.changes > 0
+  }
+
   private extractHavaleDigits(description: string | null): string | null {
     if (!description) return null
     const match = description.match(/حواله\s*\(?([0-9]+)\)?/)
