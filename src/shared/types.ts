@@ -68,12 +68,17 @@ export interface NormalizedAccountingEntry {
 }
 
 export interface ReconciliationLink {
+  readonly id?: number
   readonly layer: ReconciliationLayer
-  readonly matchType: MatchType
   readonly bankTxId?: number
-  readonly posSummaryKey?: string
-  readonly accountingEntryId?: number
-  readonly matchedBy: string
+  readonly posSummaryId?: number
+  readonly posTxId?: number
+  readonly accountingId?: number
+  readonly matchType: MatchType
+  readonly confidence: number
+  readonly createdBy?: number
+  readonly createdAt?: string
+  readonly note?: string
 }
 
 export interface ReconciliationResult {
