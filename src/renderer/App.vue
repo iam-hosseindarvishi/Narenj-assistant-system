@@ -24,6 +24,7 @@
       <v-main class="bg-grey-lighten-4">
         <DashboardView v-if="activeView === 'dashboard'" />
         <ImportView v-else-if="activeView === 'import'" />
+        <ReconciliationWizardView v-else-if="activeView === 'wizard'" />
         <Layer1View v-else-if="activeView === 'layer1'" />
         <Layer2View v-else-if="activeView === 'layer2'" />
         <Layer3View v-else-if="activeView === 'layer3'" />
@@ -55,6 +56,7 @@ import TemplatesView from './views/TemplatesView.vue'
 import UsersView from './views/UsersView.vue'
 import AuditView from './views/AuditView.vue'
 import ReportsView from './views/ReportsView.vue'
+import ReconciliationWizardView from './views/ReconciliationWizardView.vue'
 import LoginView from './views/LoginView.vue'
 import { useAuthStore } from './stores/auth'
 
@@ -63,6 +65,7 @@ const drawer = ref(true)
 const activeView = ref('dashboard')
 const navigation = [
   { key: 'dashboard', title: 'داشبورد' }, { key: 'import', title: 'ورود فایل' },
+  { key: 'wizard', title: 'مغایرت‌یابی خودکار' },
   { key: 'layer1', title: 'مغایرت پوز-بانک' }, { key: 'layer2', title: 'کارمزدها' },
   { key: 'layer3', title: 'مغایرت بانک-حسابداری' }, { key: 'layer4', title: 'مغایرت ریز پوز' },
   { key: 'manual', title: 'تطبیق دستی' }, { key: 'templates', title: 'قالب‌ها' },
