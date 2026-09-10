@@ -43,7 +43,7 @@ export class KeshavarziAdapter implements IBankAdapter {
       if (!row || row.length === 0) continue
 
       const mapped = this.mapRow(row, template)
-      if (!mapped.dateJalali && !mapped.reference) continue
+      if (!mapped.date && !mapped.reference) continue
 
       const normalized = this.normalize(mapped, rowNum)
       if (normalized) {
@@ -92,8 +92,12 @@ export class KeshavarziAdapter implements IBankAdapter {
 
     const txType = this.detectTxType(description)
 
+    const sourceRowNumber = Number(mapped.rowNumber)
+
     return {
-      rowNumber: Number(mapped.rowNumber ?? rowNum),
+      // Some bank exports leave the displayed row number blank or non-numeric.
+      // Keep the physical spreadsheet row so the database NOT NULL key is safe.
+      rowNumber: Number.isFinite(sourceRowNumber) && sourceRowNumber > 0 ? sourceRowNumber : rowNum,
       dateJalali,
       time: String(mapped.time ?? '').trim(),
       branchCode,

@@ -78,6 +78,21 @@ describe('KeshavarziAdapter', () => {
     const transfers = result.filter(r => r.txType === 'transfer')
     expect(transfers.length).toBeGreaterThan(0)
   })
+
+  it('should fall back to the physical row when bank row number is invalid', () => {
+    const adapter = new KeshavarziAdapter()
+    const header = Array.from({ length: 13 }, () => '')
+    header[11] = 'تاریخ'
+    const blankRowNumber = Array.from({ length: 13 }, () => '')
+    blankRowNumber[1] = 'واريزپايا'
+    blankRowNumber[11] = '1405/06/01'
+    const invalidRowNumber = [...blankRowNumber]
+    invalidRowNumber[12] = 'not-a-number'
+
+    const result = adapter.parse([header, blankRowNumber, invalidRowNumber], DEFAULT_TEMPLATES[0])
+
+    expect(result.map(row => row.rowNumber)).toEqual([2, 3])
+  })
 })
 
 describe('PosSummaryAdapter', () => {
