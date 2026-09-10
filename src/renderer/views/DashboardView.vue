@@ -1,11 +1,7 @@
 <template>
   <v-container dir="rtl" fluid>
     <v-row align="center" class="mb-2">
-      <v-col><h1 class="text-h5">وضعیت روزانه تطبیق</h1></v-col>
-      <v-col cols="12" sm="3">
-        <v-text-field v-model="date" label="تاریخ (YYYY/MM/DD)" density="compact" :loading="loading" @keyup.enter="load" @blur="load" />
-      </v-col>
-      <v-col cols="auto"><v-btn color="primary" variant="tonal" @click="load">نمایش</v-btn></v-col>
+      <v-col><h1 class="text-h5">وضعیت کلی تطبیق</h1></v-col>
     </v-row>
     <v-alert v-if="error" type="error" class="mb-2">{{ error }}</v-alert>
     <v-row>
@@ -15,6 +11,12 @@
           <v-card-text>
             <div class="text-h6">{{ card.matched.toLocaleString('fa-IR') }}</div>
             <div class="text-caption">تطبیق‌شده از {{ card.total.toLocaleString('fa-IR') }}</div>
+            <div v-if="card.pending > 0" class="text-caption mt-1" style="color: #ff9800">
+              {{ card.pending.toLocaleString('fa-IR') }} پیشنهاد
+            </div>
+            <div v-if="card.unmatched > 0" class="text-caption" style="color: #f44336">
+              {{ card.unmatched.toLocaleString('fa-IR') }} تطبیق‌نشده
+            </div>
             <v-progress-linear :model-value="progress(card)" color="primary" class="mt-2" />
           </v-card-text>
         </v-card>
@@ -23,7 +25,7 @@
     <v-row>
       <v-col cols="12" md="6">
         <v-card>
-          <v-card-title>کارمزد {{ date ? 'روز ' + date : 'ثبت‌نشده' }}</v-card-title>
+          <v-card-title>کل کارمزدها</v-card-title>
           <v-card-text class="text-h5">{{ fee.toLocaleString('fa-IR') }} ریال</v-card-text>
         </v-card>
       </v-col>
@@ -42,26 +44,23 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { todayJalali } from '../../shared/utils/jalali-date'
 
-interface StatusCard { title: string; matched: number; total: number }
+interface StatusCard { title: string; matched: number; total: number; unmatched: number; pending: number }
 
-const date = ref(todayJalali())
 const stats = ref<DashboardStatsDto | null>(null)
-const loading = ref(false)
 const error = ref('')
 
 const cards = computed<StatusCard[]>(() => {
   if (!stats.value) return []
   return [
-    { title: 'لایه ۱: پوز-بانک', matched: stats.value.layer1.matched + stats.value.layer1.manual, total: stats.value.layer1.total },
-    { title: 'لایه ۲: کارمزد', matched: stats.value.layer2.matched, total: stats.value.layer2.total },
-    { title: 'لایه ۳: بانک-حسابداری', matched: stats.value.layer3.matched + stats.value.layer3.manual, total: stats.value.layer3.total },
-    { title: 'لایه ۴: ریز پوز', matched: stats.value.layer4.matched + stats.value.layer4.manual, total: stats.value.layer4.total }
+    { title: 'لایه ۱: پوز-بانک', matched: stats.value.layer1.matched + stats.value.layer1.manual, total: stats.value.layer1.total, unmatched: stats.value.layer1.unmatched, pending: stats.value.layer1.pending },
+    { title: 'لایه ۲: کارمزد', matched: stats.value.layer2.matched, total: stats.value.layer2.total, unmatched: stats.value.layer2.unmatched, pending: stats.value.layer2.pending },
+    { title: 'لایه ۳: بانک-حسابداری', matched: stats.value.layer3.matched + stats.value.layer3.manual, total: stats.value.layer3.total, unmatched: stats.value.layer3.unmatched, pending: stats.value.layer3.pending },
+    { title: 'لایه ۴: ریز پوز', matched: stats.value.layer4.matched + stats.value.layer4.manual, total: stats.value.layer4.total, unmatched: stats.value.layer4.unmatched, pending: stats.value.layer4.pending }
   ]
 })
 
-const fee = computed(() => stats.value?.dateFeeTotal ?? stats.value?.unregisteredFeeTotal ?? 0)
+const fee = computed(() => stats.value?.unregisteredFeeTotal ?? 0)
 
 const overall = computed(() => {
   if (!stats.value) return 0
@@ -76,12 +75,9 @@ function progress(card: StatusCard): number {
 }
 
 async function load(): Promise<void> {
-  loading.value = true
-  error.value = ''
   try {
-    stats.value = await window.api.dashboard.stats(date.value || undefined)
+    stats.value = await window.api.dashboard.stats()
   } catch (err) { error.value = String(err) }
-  loading.value = false
 }
 
 onMounted(load)
