@@ -259,10 +259,15 @@ export class Layer3Reconciler {
               reference, deposit_ref as depositRef,
               deposit_amount as depositAmount, withdrawal_amount as withdrawalAmount,
               description, tx_type as txType, status
-       FROM bank_transactions
-       WHERE status = 'unmatched'
-         AND tx_type IN ('transfer', 'check', 'other')
-       ORDER BY date_jalali ASC`
+        FROM bank_transactions
+        WHERE status = 'unmatched'
+          AND tx_type IN ('transfer', 'check', 'other')
+          AND (description IS NULL OR (
+            description NOT LIKE '%واريزپايا%'
+            AND description NOT LIKE '%کارمزد%'
+            AND description NOT LIKE '%ثبت چک%'
+          ))
+        ORDER BY date_jalali ASC`
     ).all() as BankTxCandidate[]
   }
 

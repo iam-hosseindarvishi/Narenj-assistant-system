@@ -75,4 +75,15 @@ describe('Layer2Reconciler', () => {
     const updated = db.prepare('SELECT * FROM fee_aggregations WHERE date_jalali = ?').get(agg.date_jalali) as { registered: number }
     expect(updated.registered).toBe(1)
   })
+
+  it('should exclude matched fees from the next aggregation', () => {
+    const result = reconciler.reconcile()
+    const firstTotal = result.fees.reduce((sum, fee) => sum + fee.totalAmount, 0)
+
+    expect(firstTotal).toBeGreaterThan(0)
+    const second = reconciler.reconcile()
+
+    expect(second.matched).toBe(0)
+    expect(second.fees.reduce((sum, fee) => sum + fee.totalAmount, 0)).toBe(firstTotal)
+  })
 })

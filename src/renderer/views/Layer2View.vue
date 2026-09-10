@@ -8,6 +8,7 @@
           اجرای تطبیق کارمزد
         </v-btn>
         <v-alert v-if="error" type="error" class="mb-4">{{ error }}</v-alert>
+        <v-alert v-if="success" type="success" class="mb-4">{{ success }}</v-alert>
 
         <v-table>
           <thead>
@@ -102,6 +103,7 @@ const detailsDialog = ref(false)
 const running = ref(false)
 const toggling = ref('')
 const error = ref('')
+const success = ref('')
 
 function formatAmount(val: number): string {
   return (val || 0).toLocaleString('fa-IR')
@@ -115,11 +117,12 @@ async function load(): Promise<void> {
 async function runReconciliation(): Promise<void> {
   running.value = true
   error.value = ''
+  success.value = ''
   try {
-    await window.api.layer2.reconcile()
+    const result = await window.api.layer2.reconcile()
+    success.value = `تطبیق کارمزد انجام شد: ${result.matched} مورد متصل و ${result.aggregated} تجمیع روزانه`
     await load()
-  } catch (err) { error.value = String(err) }
-  running.value = false
+  } catch (err) { error.value = errorMessage(err) } finally { running.value = false }
 }
 
 async function toggleRegistered(item: Layer2RowDto, registered: boolean): Promise<void> {
@@ -127,8 +130,11 @@ async function toggleRegistered(item: Layer2RowDto, registered: boolean): Promis
   try {
     await window.api.layer2.register(item.dateJalali, registered)
     await load()
-  } catch (err) { error.value = String(err) }
-  toggling.value = ''
+  } catch (err) { error.value = errorMessage(err) } finally { toggling.value = '' }
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
 }
 
 function selectDate(item: Layer2RowDto): void {

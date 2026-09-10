@@ -51,8 +51,10 @@ export class Layer2Reconciler {
     for (const bankFee of bankFees) {
       const bankAmount = bankFee.depositAmount || bankFee.withdrawalAmount
 
+      if (bankFee.status === 'matched') continue
+
       const accountingMatch = accountingFees.find(
-        a => !usedAccountingIds.has(a.id) &&
+        a => a.status === 'unmatched' && !usedAccountingIds.has(a.id) &&
           (a.debit === bankAmount || a.credit === bankAmount) &&
           a.dateJalali === bankFee.dateJalali
       )
@@ -60,6 +62,8 @@ export class Layer2Reconciler {
       if (accountingMatch) {
         this.writeLink(bankFee.id, accountingMatch.id, 'auto')
         this.updateBankStatus(bankFee.id, 'matched')
+        bankFee.status = 'matched'
+        this.updateAccountingStatus(accountingMatch.id, 'matched')
         usedAccountingIds.add(accountingMatch.id)
         matched++
       }
@@ -67,7 +71,7 @@ export class Layer2Reconciler {
 
     // Aggregate unmatched fees by date
     const unmatchedFees = bankFees.filter(f => f.status !== 'matched')
-    const aggregation = this.aggregateFees(unmatchedFees)
+    const aggregation = this.aggregateFees(unmatchedFees, bankFees)
 
     // Write fee aggregations
     this.writeAggregations(aggregation)
@@ -96,7 +100,11 @@ export class Layer2Reconciler {
     return this.conn.prepare(
       `SELECT id, date_jalali as dateJalali, deposit_amount as depositAmount,
               withdrawal_amount as withdrawalAmount, description, status
-       FROM bank_transactions WHERE tx_type = 'fee'`
+       FROM bank_transactions
+       WHERE tx_type = 'fee'
+          OR (description LIKE '%واريزپايا%' AND description NOT LIKE '%شرح:%')
+          OR description LIKE '%کارمزد%'
+          OR description LIKE '%ثبت چک%'`
     ).all() as BankFeeRow[]
   }
 
@@ -118,8 +126,12 @@ export class Layer2Reconciler {
     this.conn.prepare('UPDATE bank_transactions SET status = ? WHERE id = ?').run(status, bankTxId)
   }
 
-  private aggregateFees(fees: BankFeeRow[]): FeeAggregation[] {
-    const byDate = new Map<string, number>()
+  private updateAccountingStatus(accountingId: number, status: string): void {
+    this.conn.prepare('UPDATE accounting_entries SET status = ? WHERE id = ?').run(status, accountingId)
+  }
+
+  private aggregateFees(fees: BankFeeRow[], allFees: BankFeeRow[]): FeeAggregation[] {
+    const byDate = new Map<string, number>(allFees.map(fee => [fee.dateJalali, 0]))
 
     for (const fee of fees) {
       const amount = (fee.depositAmount ?? 0) + (fee.withdrawalAmount ?? 0)
@@ -132,7 +144,7 @@ export class Layer2Reconciler {
       result.push({
         dateJalali: date,
         totalAmount: total,
-        linkedCount: 0,
+        linkedCount: allFees.filter(f => f.dateJalali === date && f.status === 'matched').length,
         unlinkedCount: fees.filter(f => f.dateJalali === date).length,
         registered: false
       })
@@ -142,6 +154,14 @@ export class Layer2Reconciler {
   }
 
   private writeAggregations(aggregations: FeeAggregation[]): void {
+    const dates = new Set(aggregations.map(aggregation => aggregation.dateJalali))
+    const existingRows = this.conn.prepare('SELECT date_jalali as dateJalali FROM fee_aggregations').all() as Array<{ dateJalali: string }>
+    for (const row of existingRows) {
+      if (!dates.has(row.dateJalali)) {
+        this.conn.prepare('UPDATE fee_aggregations SET total_amount = 0 WHERE date_jalali = ?').run(row.dateJalali)
+      }
+    }
+
     for (const agg of aggregations) {
       const existing = this.conn.prepare(
         'SELECT id FROM fee_aggregations WHERE date_jalali = ?'

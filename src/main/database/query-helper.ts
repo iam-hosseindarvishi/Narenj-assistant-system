@@ -152,12 +152,13 @@ export class QueryHelper {
         status: String(f.status ?? 'unmatched')
       }))
       const fallbackTotal = dayFees.filter(f => f.status !== 'matched').reduce((sum, f) => sum + f.amount, 0)
+      const registered = Boolean(agg?.registered)
       return {
         dateJalali: date,
-        totalAmount: agg ? Number(agg.totalAmount) : fallbackTotal,
+        totalAmount: registered ? 0 : (agg ? Number(agg.totalAmount) : fallbackTotal),
         linkedCount: dayFees.filter(f => f.status === 'matched').length,
-        unlinkedCount: dayFees.filter(f => f.status !== 'matched').length,
-        registered: Boolean(agg?.registered),
+        unlinkedCount: registered ? 0 : dayFees.filter(f => f.status !== 'matched').length,
+        registered,
         registeredBy: agg && agg.registeredBy !== undefined && agg.registeredBy !== null ? Number(agg.registeredBy) : null,
         registeredAt: agg && agg.registeredAt ? String(agg.registeredAt) : null,
         fees: dayFees
@@ -174,9 +175,14 @@ export class QueryHelper {
              rl.id as linkId, rl.match_type as matchType, rl.confidence
       FROM bank_transactions bt
       LEFT JOIN reconciliation_links rl ON rl.bank_tx_id = bt.id AND rl.layer = 3
-      LEFT JOIN accounting_entries ae ON ae.id = rl.accounting_id
-      WHERE bt.tx_type IN ('transfer', 'check', 'other')
-      ORDER BY bt.date_jalali, bt.id
+       LEFT JOIN accounting_entries ae ON ae.id = rl.accounting_id
+       WHERE bt.tx_type IN ('transfer', 'check', 'other')
+         AND (bt.description IS NULL OR (
+           bt.description NOT LIKE '%واريزپايا%'
+           AND bt.description NOT LIKE '%کارمزد%'
+           AND bt.description NOT LIKE '%ثبت چک%'
+         ))
+       ORDER BY bt.date_jalali, bt.id
     `).all() as Array<Record<string, unknown>>
     return rows.map(r => ({
       bankTxId: Number(r.bankTxId),
