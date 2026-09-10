@@ -109,10 +109,16 @@ export class KeshavarziAdapter implements IBankAdapter {
   }
 
   private detectTxType(description: string): string {
-    if (description.includes('واريزپايا') || description.includes('شاپارک') || description.includes('مرکزشاپرک')) {
+    // Shaparak/POS deposits: واريزپايا with detailed description (contains شرح or نام واریز کننده) or مرکزشاپرک or شاپارک
+    if ((description.includes('واريزپايا') && (description.includes('شرح:') || description.includes('نام واریز کننده'))) || 
+        (description.includes('واريزپايا') && description.includes('مرکزشاپرک')) || 
+        description.includes('شاپارک')) {
       return 'shaparak'
     }
-    if (description.includes('کارمزد') || description.includes('ثبت چک')) {
+    // Fee transactions: واريزپايا alone (without detailed info, مرکزشاپرک, or شاپارک) or explicit fee keywords
+    if ((description.includes('واريزپايا') && !description.includes('شرح:') && !description.includes('نام واریز کننده') && !description.includes('مرکزشاپرک')) || 
+        description.includes('کارمزد') || 
+        description.includes('ثبت چک')) {
       return 'fee'
     }
     if (description.includes('چک')) {

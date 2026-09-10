@@ -42,7 +42,7 @@
   },
   "build": {
     "appId": "com.narenj.reconciliation",
-    "productName": "Narenj Reconciliation",
+    "productName": "سامانه تطبیق نارنج",
     "directories": {
       "output": "release"
     },

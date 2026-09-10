@@ -81,6 +81,6 @@
     "task": "12-final-qa-package",
     "file": "sub-tasks/12-final-qa-package.json",
     "description": "Final QA, packaging, docs",
-    "status": "pending"
+    "status": "done"
   }
 ]
