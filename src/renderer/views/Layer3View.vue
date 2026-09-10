@@ -10,6 +10,7 @@
           <v-col cols="12" md="3" class="d-flex align-center"><v-btn color="primary" block :loading="running" @click="runReconciliation">اجرای تطبیق لایه ۳</v-btn></v-col>
         </v-row>
         <v-alert v-if="error" class="mt-4" type="error">{{ error }}</v-alert>
+        <v-alert v-if="success" class="mt-4" type="success">{{ success }}</v-alert>
       </v-card-text>
     </v-card>
 
@@ -58,6 +59,7 @@ import { computed, onMounted, ref } from 'vue'
 const rows = ref<Layer3RowDto[]>([])
 const running = ref(false)
 const error = ref('')
+const success = ref('')
 
 const stats = computed(() => ({
   matched: rows.value.filter(r => r.status === 'matched' || r.status === 'manual').length,
@@ -84,26 +86,37 @@ function statusLabel(row: Layer3RowDto): string {
 
 async function load(): Promise<void> {
   error.value = ''
-  try { rows.value = await window.api.layer3.list() } catch (err) { error.value = String(err) }
+  try { rows.value = await window.api.layer3.list() } catch (err) { error.value = errorMessage(err) }
 }
 
 async function runReconciliation(): Promise<void> {
   running.value = true
   error.value = ''
+  success.value = ''
   try {
     const result = await window.api.layer3.reconcile()
-    if (!result.ok && result.error) error.value = result.error
+    if (!result.ok) {
+      error.value = result.error ?? 'اجرای تطبیق لایه ۳ ناموفق بود'
+      return
+    }
+    const data = result.data
+    success.value = data
+      ? `تطبیق لایه ۳ انجام شد: ${data.matched} تطبیق، ${data.pending} پیشنهاد، ${data.unmatched} تطبیق‌نشده`
+      : 'تطبیق لایه ۳ انجام شد'
     await load()
-  } catch (err) { error.value = String(err) }
-  running.value = false
+  } catch (err) { error.value = errorMessage(err) } finally { running.value = false }
 }
 
 async function accept(linkId: number): Promise<void> {
-  try { await window.api.layer3.accept(linkId); await load() } catch (err) { error.value = String(err) }
+  try { await window.api.layer3.accept(linkId); await load() } catch (err) { error.value = errorMessage(err) }
 }
 
 async function reject(linkId: number): Promise<void> {
-  try { await window.api.layer3.reject(linkId); await load() } catch (err) { error.value = String(err) }
+  try { await window.api.layer3.reject(linkId); await load() } catch (err) { error.value = errorMessage(err) }
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
 }
 
 onMounted(load)
