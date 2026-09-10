@@ -44,12 +44,38 @@ export class Layer4Reconciler {
       const matchedPosIds = new Set<number>()
       let matched = 0
 
+      for (const entry of accountingEntries) {
+        if (usedAccountingIds.has(entry.id) || !this.isAggregateDescription(entry.description ?? '')) continue
+
+        const entryAmount = entry.debit > 0 ? entry.debit : entry.credit
+        if (entryAmount <= 0) continue
+
+        const branchFilter = this.extractAggregateBranch(entry.description ?? '')
+        const candidates = posTransactions.filter(pos =>
+          !matchedPosIds.has(pos.id) &&
+          pos.dateJalali === entry.dateJalali &&
+          (!branchFilter || this.branchNameMatches(pos.branchName ?? '', branchFilter))
+        )
+
+        const total = candidates.reduce((sum, pos) => sum + pos.amount, 0)
+        if (candidates.length === 0 || Math.abs(total - entryAmount) >= 0.01) continue
+
+        for (const pos of candidates) {
+          const link = this.createLink(pos.id, entry.id, MatchType.Auto, 0.9, 'Layer 4 aggregated POS transaction match')
+          links.push(link)
+          matchedPosIds.add(pos.id)
+          matched++
+          this.persistMatch(pos.id, entry.id, link, { posTxId: pos.id, accountingId: entry.id, layer: 4, aggregated: true })
+        }
+        usedAccountingIds.add(entry.id)
+      }
+
       for (const pos of posTransactions) {
         const last6 = this.extractLast6(pos.refNumber)
         const last4 = this.extractCardLast4(pos.cardNumberMasked ?? '')
         const candidates = accountingEntries.filter(entry =>
           !usedAccountingIds.has(entry.id) &&
-          this.matchesDescription(entry.description ?? '', last6, last4, pos.branchName ?? '')
+          this.matchesDescription(entry.description ?? '', last6, last4)
         )
 
         if (candidates.length === 1) {
@@ -61,30 +87,6 @@ export class Layer4Reconciler {
           matched++
           this.persistMatch(pos.id, entry.id, link, { posTxId: pos.id, accountingId: entry.id, layer: 4 })
         }
-      }
-
-      for (const entry of accountingEntries) {
-        if (usedAccountingIds.has(entry.id) || !this.isAggregateDescription(entry.description ?? '')) continue
-        const reference = this.extractAggregateReference(entry.description ?? '')
-        if (!reference) continue
-        const branchId = reference.slice(0, -4)
-        const monthDay = reference.slice(-4)
-        const candidates = posTransactions.filter(pos =>
-          !matchedPosIds.has(pos.id) &&
-          this.branchMatches(pos.branchName ?? '', branchId) &&
-          this.dateMatches(pos.dateJalali, monthDay)
-        )
-        const total = candidates.reduce((sum, pos) => sum + pos.amount, 0)
-        if (candidates.length === 0 || Math.abs(total - entry.credit) >= 0.01) continue
-
-        for (const pos of candidates) {
-          const link = this.createLink(pos.id, entry.id, MatchType.Auto, 0.9, 'Layer 4 aggregated POS transaction match')
-          links.push(link)
-          matchedPosIds.add(pos.id)
-          matched++
-          this.persistMatch(pos.id, entry.id, link, { posTxId: pos.id, accountingId: entry.id, layer: 4, aggregated: true })
-        }
-        usedAccountingIds.add(entry.id)
       }
 
       return { ok: true, data: { matched, pending: 0, unmatched: posTransactions.length - matched, links } }
@@ -101,8 +103,10 @@ export class Layer4Reconciler {
     return cardNumber.replace(/\*/g, '').replace(/\D/g, '').slice(-4)
   }
 
-  private matchesDescription(description: string, last6: string, last4: string, branchName: string): boolean {
-    return description.includes(`حواله (${last6})`) && description.includes(`ک ${last4}`) && branchName.length > 0 && description.includes(branchName)
+  private matchesDescription(description: string, last6: string, last4: string): boolean {
+    const hasHavale = last6.length >= 4 && description.includes(`حواله (${last6})`)
+    const hasCard = last4.length >= 4 && description.includes(`ک ${last4}`)
+    return hasHavale && hasCard
   }
 
   private extractAggregateReference(description: string): string | null {
@@ -114,12 +118,13 @@ export class Layer4Reconciler {
     return /سرجمع|تجمیع|تجمیعی|جمع\s*کل/.test(description)
   }
 
-  private branchMatches(branchName: string, branchId: string): boolean {
-    return branchName === branchId || branchName.includes(branchId) || branchName.replace(/\D/g, '') === branchId
+  private extractAggregateBranch(description: string): string | null {
+    const match = description.match(/سرجمع\s+(نارنج\s+\S+)/)
+    return match ? match[1] : null
   }
 
-  private dateMatches(date: string | null, monthDay: string): boolean {
-    return !!date && date.split('/').slice(-2).join('') === monthDay
+  private branchNameMatches(branchName: string, branchFilter: string): boolean {
+    return branchName.includes(branchFilter)
   }
 
   private getPosTransactions(): PosTransaction[] {

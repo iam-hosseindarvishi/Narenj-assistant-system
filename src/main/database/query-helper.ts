@@ -182,6 +182,15 @@ export class QueryHelper {
            AND bt.description NOT LIKE '%کارمزد%'
            AND bt.description NOT LIKE '%ثبت چک%'
          ))
+         AND NOT EXISTS (
+           SELECT 1 FROM accounting_entries ae
+           WHERE ae.entry_type = 'fee'
+             AND ae.date_jalali = bt.date_jalali
+             AND (
+               (bt.deposit_amount > 0 AND ae.credit = bt.deposit_amount)
+               OR (bt.withdrawal_amount > 0 AND ae.debit = bt.withdrawal_amount)
+             )
+         )
        ORDER BY bt.date_jalali, bt.id
     `).all() as Array<Record<string, unknown>>
     return rows.map(r => ({

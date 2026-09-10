@@ -104,7 +104,16 @@ export class Layer2Reconciler {
        WHERE tx_type = 'fee'
           OR (description LIKE '%واريزپايا%' AND description NOT LIKE '%شرح:%')
           OR description LIKE '%کارمزد%'
-          OR description LIKE '%ثبت چک%'`
+          OR description LIKE '%ثبت چک%'
+          OR EXISTS (
+            SELECT 1 FROM accounting_entries ae
+            WHERE ae.entry_type = 'fee'
+              AND ae.date_jalali = bank_transactions.date_jalali
+              AND (
+                (bank_transactions.deposit_amount > 0 AND ae.credit = bank_transactions.deposit_amount)
+                OR (bank_transactions.withdrawal_amount > 0 AND ae.debit = bank_transactions.withdrawal_amount)
+              )
+          )`
     ).all() as BankFeeRow[]
   }
 

@@ -14,9 +14,12 @@ export class TemplateSeeder {
     let count = 0
 
     for (const tpl of DEFAULT_TEMPLATES) {
-      const alreadyExists = existing.some(e => e.name === tpl.name && e.type === tpl.type)
+      const alreadyExists = existing.find(e => e.name === tpl.name && e.type === tpl.type)
       if (!alreadyExists) {
         this.repo.create(tpl)
+        count++
+      } else if (JSON.stringify(alreadyExists.columnMapping) !== JSON.stringify(tpl.columnMapping)) {
+        this.repo.update(alreadyExists.id, { columnMapping: tpl.columnMapping })
         count++
       }
     }

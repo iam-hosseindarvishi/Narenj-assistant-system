@@ -71,7 +71,7 @@ describe('QueryHelper', () => {
     `).run()
     db.prepare(`
       INSERT INTO accounting_entries (file_id, entry_id, date_jalali, debit, credit, description, entry_type, status)
-      VALUES (2, 9002, '1405/06/15', 0, 200000000, 'سند دریافت شبا کشاورزی حواله (12345)', 'receipt', 'unmatched')
+      VALUES (2, 9002, '1405/06/15', 200000000, 0, 'سند دریافت شبا کشاورزی حواله (12345)', 'receipt', 'unmatched')
     `).run()
     new Layer3Reconciler(conn).reconcile()
     const rows = queries.listLayer3()
@@ -86,7 +86,7 @@ describe('QueryHelper', () => {
     layer3.reconcile()
     const suggestion = db.prepare("SELECT id FROM reconciliation_links WHERE layer = 3 AND match_type = 'suggested'").get() as { id: number } | undefined
     if (!suggestion) return
-    expect(layer3.acceptSuggestion(suggestion.id, 1)).toBe(true)
+    expect(layer3.acceptSuggestion(suggestion.id, null)).toBe(true)
     const accepted = db.prepare('SELECT match_type, bank_tx_id FROM reconciliation_links WHERE id = ?').get(suggestion.id) as { match_type: string; bank_tx_id: number }
     expect(accepted.match_type).toBe('manual')
     const bank = db.prepare('SELECT status FROM bank_transactions WHERE id = ?').get(accepted.bank_tx_id) as { status: string }

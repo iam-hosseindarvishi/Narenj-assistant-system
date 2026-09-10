@@ -68,10 +68,11 @@ export const DEFAULT_TEMPLATES: Template[] = [
     columnMapping: {
       trackingCode: 'A',
       cardNumber: 'B',
-      branchName: 'C',
-      time: 'D',
-      amount: 'E',
-      status: 'F'
+      branchName: 'D',
+      time: 'I',
+      amount: 'H',
+      status: 'N',
+      date: 'J'
     },
     cleanupRules: {
       skipTopRows: [],

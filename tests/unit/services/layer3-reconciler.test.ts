@@ -74,8 +74,8 @@ describe('Layer3Reconciler', () => {
     db.prepare(`
       INSERT INTO accounting_entries (file_id, entry_id, date_jalali, debit, credit, description, entry_type, status)
       VALUES 
-      (2, 9001, '1405/06/15', 0, 200000000, 'سند دریافت ک 3215 - نارنج 12', 'receipt', 'unmatched'),
-      (2, 9002, '1405/06/15', 0, 200000000, 'سند دریافت شبا کشاورزی حواله (12345)', 'receipt', 'unmatched')
+      (2, 9001, '1405/06/15', 200000000, 0, 'سند دریافت ک 3215 - نارنج 12', 'receipt', 'unmatched'),
+      (2, 9002, '1405/06/15', 200000000, 0, 'سند دریافت شبا کشاورزی حواله (12345)', 'receipt', 'unmatched')
     `).run()
 
     const res = reconciler.reconcile()
@@ -100,8 +100,8 @@ describe('Layer3Reconciler', () => {
     db.prepare(`
       INSERT INTO accounting_entries (file_id, entry_id, date_jalali, debit, credit, description, entry_type, status)
       VALUES 
-      (2, 9003, '1405/06/20', 0, 50000000, 'واریز به حساب چک 987654', 'check', 'unmatched'),
-      (2, 9004, '1405/06/20', 0, 50000000, 'واریز به حساب چک 111111', 'check', 'unmatched')
+      (2, 9003, '1405/06/20', 50000000, 0, 'واریز به حساب چک 987654', 'check', 'unmatched'),
+      (2, 9004, '1405/06/20', 50000000, 0, 'واریز به حساب چک 111111', 'check', 'unmatched')
     `).run()
 
     const res = reconciler.reconcile()
@@ -123,8 +123,8 @@ describe('Layer3Reconciler', () => {
     db.prepare(`
       INSERT INTO accounting_entries (file_id, entry_id, date_jalali, debit, credit, description, entry_type, status)
       VALUES 
-      (2, 9005, '1405/06/25', 0, 77000000, 'واریز متفرقه اول', 'other', 'unmatched'),
-      (2, 9006, '1405/06/25', 0, 77000000, 'واریز متفرقه دوم', 'other', 'unmatched')
+      (2, 9005, '1405/06/25', 77000000, 0, 'واریز متفرقه اول', 'other', 'unmatched'),
+      (2, 9006, '1405/06/25', 77000000, 0, 'واریز متفرقه دوم', 'other', 'unmatched')
     `).run()
 
     const res = reconciler.reconcile()

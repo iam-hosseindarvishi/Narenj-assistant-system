@@ -59,7 +59,7 @@ export class Layer3Reconciler {
         const sameDateAmountMatches = accountingCandidates.filter(a => {
           if (matchedAccountingIds.has(a.id)) return false
           if (a.dateJalali !== bankTx.dateJalali) return false
-          const accAmount = isDeposit ? a.credit : a.debit
+          const accAmount = isDeposit ? a.debit : a.credit
           return Math.abs(accAmount - bankAmount) < 0.01
         })
 
@@ -267,6 +267,15 @@ export class Layer3Reconciler {
             AND description NOT LIKE '%کارمزد%'
             AND description NOT LIKE '%ثبت چک%'
           ))
+          AND NOT EXISTS (
+            SELECT 1 FROM accounting_entries ae
+            WHERE ae.entry_type = 'fee'
+              AND ae.date_jalali = bank_transactions.date_jalali
+              AND (
+                (bank_transactions.deposit_amount > 0 AND ae.credit = bank_transactions.deposit_amount)
+                OR (bank_transactions.withdrawal_amount > 0 AND ae.debit = bank_transactions.withdrawal_amount)
+              )
+          )
         ORDER BY date_jalali ASC`
     ).all() as BankTxCandidate[]
   }

@@ -11,6 +11,7 @@
           <v-col cols="12" md="3" class="d-flex align-center"><v-btn color="primary" block :loading="running" @click="runReconcile">اجرای تطبیق ریز پوز با حسابداری</v-btn></v-col>
         </v-row>
         <v-alert v-if="error" class="mt-4" type="error">{{ error }}</v-alert>
+        <v-alert v-if="success" class="mt-4" type="success">{{ success }}</v-alert>
       </v-card-text>
     </v-card>
 
@@ -57,6 +58,7 @@ import { computed, onMounted, ref } from 'vue'
 const rows = ref<Layer4RowDto[]>([])
 const running = ref(false)
 const error = ref('')
+const success = ref('')
 
 const groups = computed(() => {
   const map = new Map<string, Layer4RowDto[]>()
@@ -99,9 +101,17 @@ async function load(): Promise<void> {
 async function runReconcile(): Promise<void> {
   running.value = true
   error.value = ''
+  success.value = ''
   try {
     const result = await window.api.layer4.reconcile()
-    if (!result.ok && result.error) error.value = result.error
+    if (!result.ok && result.error) {
+      error.value = result.error
+      return
+    }
+    const data = result.data
+    success.value = data
+      ? `تطبیق لایه ۴ انجام شد: ${data.matched} تطبیق، ${data.unmatched} تطبیق‌نشده`
+      : 'تطبیق لایه ۴ انجام شد'
     await load()
   } catch (err) { error.value = String(err) }
   running.value = false
