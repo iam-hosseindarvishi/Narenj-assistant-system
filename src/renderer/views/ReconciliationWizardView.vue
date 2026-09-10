@@ -1,6 +1,6 @@
 <template>
-  <v-container fluid dir="rtl">
-    <h1 class="text-h5 mb-4">مغایرت‌یابی خودکار</h1>
+  <v-container fluid dir="rtl" class="pa-0">
+    <h1 class="text-h5 mb-4 px-4">مغایرت‌یابی خودکار</h1>
 
     <v-stepper v-model="currentStep" :items="steps" flat>
       <template #item.1>
@@ -17,10 +17,12 @@
       </template>
 
       <template #actions>
-        <v-card flat class="d-flex justify-space-between pa-4">
-          <v-btn v-if="currentStep > 1" variant="tonal" @click="currentStep--">مرحله قبل</v-btn>
+        <v-divider class="mt-2" />
+        <v-card flat class="d-flex justify-space-between align-center pa-4" style="position: sticky; bottom: 0; z-index: 10; background: white;">
+          <v-btn v-if="currentStep > 1" variant="tonal" prepend-icon="mdi-arrow-right" @click="currentStep--">مرحله قبل</v-btn>
           <v-spacer v-else />
-          <v-btn v-if="currentStep < 4" color="primary" :disabled="!stepDone[currentStep - 1]" @click="currentStep++">مرحله بعد</v-btn>
+          <v-btn v-if="currentStep < 4" color="primary" prepend-icon="mdi-arrow-left" :disabled="!stepDone[currentStep - 1]" @click="currentStep++">مرحله بعد</v-btn>
+          <v-chip v-if="currentStep === 4 && stepDone[3]" color="success" size="large" prepend-icon="mdi-check-circle">تمام مراحل تکمیل شد</v-chip>
         </v-card>
       </template>
     </v-stepper>
