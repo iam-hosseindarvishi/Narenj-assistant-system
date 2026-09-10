@@ -21,7 +21,6 @@
           <v-btn v-if="currentStep > 1" variant="tonal" @click="currentStep--">مرحله قبل</v-btn>
           <v-spacer v-else />
           <v-btn v-if="currentStep < 4" color="primary" :disabled="!stepDone[currentStep - 1]" @click="currentStep++">مرحله بعد</v-btn>
-          <v-btn v-if="currentStep === 4 && stepDone[3]" color="success" @click="$router?.push?.('/') ?? (window.location.href = '/')">بازگشت به داشبورد</v-btn>
         </v-card>
       </template>
     </v-stepper>
