@@ -4,26 +4,16 @@
 
     <v-stepper v-model="currentStep" :items="steps" flat>
       <template #item.1>
-        <LayerStep1 :active="currentStep === 1" @done="markDone(0)" />
+        <LayerStep1 :active="currentStep === 1" @done="markDone(0)" @next="goNext" />
       </template>
       <template #item.2>
-        <LayerStep2 :active="currentStep === 2" @done="markDone(1)" />
+        <LayerStep2 :active="currentStep === 2" @done="markDone(1)" @next="goNext" />
       </template>
       <template #item.3>
-        <LayerStep3 :active="currentStep === 3" @done="markDone(2)" />
+        <LayerStep3 :active="currentStep === 3" @done="markDone(2)" @next="goNext" />
       </template>
       <template #item.4>
         <LayerStep4 :active="currentStep === 4" @done="markDone(3)" />
-      </template>
-
-      <template #actions>
-        <v-divider class="mt-2" />
-        <v-card flat class="d-flex justify-space-between align-center pa-4" style="position: sticky; bottom: 0; z-index: 10; background: white;">
-          <v-btn v-if="currentStep > 1" variant="tonal" prepend-icon="mdi-arrow-right" @click="currentStep--">مرحله قبل</v-btn>
-          <v-spacer v-else />
-          <v-btn v-if="currentStep < 4" color="primary" prepend-icon="mdi-arrow-left" :disabled="!stepDone[currentStep - 1]" @click="currentStep++">مرحله بعد</v-btn>
-          <v-chip v-if="currentStep === 4 && stepDone[3]" color="success" size="large" prepend-icon="mdi-check-circle">تمام مراحل تکمیل شد</v-chip>
-        </v-card>
       </template>
     </v-stepper>
   </v-container>
@@ -48,5 +38,9 @@ const stepDone = ref([false, false, false, false])
 
 function markDone(index: number): void {
   stepDone.value[index] = true
+}
+
+function goNext(): void {
+  if (currentStep.value < 4) currentStep.value++
 }
 </script>

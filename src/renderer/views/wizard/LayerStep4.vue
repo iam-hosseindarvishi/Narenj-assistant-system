@@ -7,11 +7,16 @@
         <v-col cols="12" sm="6" md="3"><v-card color="success" variant="tonal"><v-card-title>تطبیق‌شده</v-card-title><v-card-text class="text-h5">{{ counts.matched }}</v-card-text></v-card></v-col>
         <v-col cols="12" sm="6" md="3"><v-card color="error" variant="tonal"><v-card-title>تطبیق‌نیافته</v-card-title><v-card-text class="text-h5">{{ counts.unmatched }}</v-card-text></v-card></v-col>
         <v-col cols="12" sm="6" md="3"><v-card color="info" variant="tonal"><v-card-title>گروه تجمیعی</v-card-title><v-card-text class="text-h5">{{ aggregatedCount }}</v-card-text></v-card></v-col>
-        <v-col cols="12" md="3" class="d-flex align-center">
+        <v-col cols="12" md="3" class="d-flex align-center gap-2">
           <v-btn v-if="!reconciled" color="primary" block :loading="running" @click="runReconcile">اجرای تطبیق ریز پوز</v-btn>
-          <v-chip v-else color="success" size="large" prepend-icon="mdi-check-circle">تکمیل شد</v-chip>
+          <template v-else>
+            <v-chip color="success" size="large" prepend-icon="mdi-check-circle">تکمیل شد</v-chip>
+          </template>
         </v-col>
       </v-row>
+      <v-alert v-if="alreadyDone" type="info" variant="tonal" class="mb-4" prepend-icon="mdi-information">
+        داده جدیدی برای پردازش وجود ندارد. برای مشاهده نتایج از بخش <strong>گزارش‌ها</strong> اقدام فرمایید.
+      </v-alert>
       <v-alert v-if="error" type="error" class="mb-4">{{ error }}</v-alert>
       <v-alert v-if="success" type="success" class="mb-4">{{ success }}</v-alert>
 
@@ -64,6 +69,7 @@ const running = ref(false)
 const error = ref('')
 const success = ref('')
 const reconciled = ref(false)
+const alreadyDone = ref(false)
 
 const groups = computed(() => {
   const map = new Map<string, Layer4RowDto[]>()
@@ -100,8 +106,14 @@ function formatAmount(val: number): string {
 
 async function load(): Promise<void> {
   error.value = ''
-  try { rows.value = await window.api.layer4.list() } catch (err) { error.value = String(err) }
-  if (reconciled.value) emit('done')
+  try {
+    rows.value = await window.api.layer4.list()
+    if (rows.value.length > 0 && counts.value.unmatched === 0) {
+      reconciled.value = true
+      alreadyDone.value = true
+      emit('done')
+    }
+  } catch (err) { error.value = String(err) }
 }
 
 async function runReconcile(): Promise<void> {
@@ -120,6 +132,7 @@ async function runReconcile(): Promise<void> {
       : 'تطبیق لایه ۴ انجام شد'
     reconciled.value = true
     await load()
+    emit('done')
   } catch (err) { error.value = String(err) }
   running.value = false
 }

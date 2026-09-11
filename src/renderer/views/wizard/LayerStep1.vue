@@ -7,11 +7,17 @@
         <v-col cols="12" sm="6" md="3"><v-card color="success" variant="tonal"><v-card-title>تطبیق‌شده</v-card-title><v-card-text class="text-h5">{{ counts.matched }}</v-card-text></v-card></v-col>
         <v-col cols="12" sm="6" md="3"><v-card color="warning" variant="tonal"><v-card-title>در انتظار</v-card-title><v-card-text class="text-h5">{{ counts.pending }}</v-card-text></v-card></v-col>
         <v-col cols="12" sm="6" md="3"><v-card color="error" variant="tonal"><v-card-title>تطبیق‌نیافته</v-card-title><v-card-text class="text-h5">{{ counts.unmatched }}</v-card-text></v-card></v-col>
-        <v-col cols="12" md="3" class="d-flex align-center">
-          <v-btn v-if="!reconciled" color="primary" block :loading="running" @click="runReconcile">اجرای تطبیق پوز و بانک</v-btn>
-          <v-chip v-else color="success" size="large" prepend-icon="mdi-check-circle">تکمیل شد</v-chip>
+        <v-col cols="12" md="3" class="d-flex align-center gap-2">
+          <v-btn v-if="!reconciled" color="primary" :loading="running" @click="runReconcile">اجرای تطبیق پوز و بانک</v-btn>
+          <template v-else>
+            <v-chip color="success" size="large" prepend-icon="mdi-check-circle">تکمیل شد</v-chip>
+            <v-btn color="primary" variant="tonal" prepend-icon="mdi-arrow-left" @click="$emit('next')">مرحله بعد</v-btn>
+          </template>
         </v-col>
       </v-row>
+      <v-alert v-if="alreadyDone" type="info" variant="tonal" class="mb-4" prepend-icon="mdi-information">
+        داده جدیدی برای پردازش وجود ندارد. برای مشاهده نتایج از بخش <strong>گزارش‌ها</strong> اقدام فرمایید.
+      </v-alert>
       <v-alert v-if="error" type="error" class="mb-4">{{ error }}</v-alert>
       <v-alert v-if="success" type="success" class="mb-4">{{ success }}</v-alert>
 
@@ -53,7 +59,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{ active: boolean }>()
-const emit = defineEmits<{ done: [] }>()
+const emit = defineEmits<{ done: []; next: [] }>()
 
 const rows = ref<Layer1RowDto[]>([])
 const loading = ref(false)
@@ -61,6 +67,7 @@ const running = ref(false)
 const error = ref('')
 const success = ref('')
 const reconciled = ref(false)
+const alreadyDone = ref(false)
 
 const groups = computed(() => {
   const map = new Map<string, Layer1RowDto[]>()
@@ -104,9 +111,15 @@ function diffColor(diff: number | null): string {
 async function load(): Promise<void> {
   loading.value = true
   error.value = ''
-  try { rows.value = await window.api.layer1.list() } catch (err) { error.value = String(err) }
+  try {
+    rows.value = await window.api.layer1.list()
+    if (rows.value.length > 0 && counts.value.unmatched === 0 && counts.value.pending === 0) {
+      reconciled.value = true
+      alreadyDone.value = true
+      emit('done')
+    }
+  } catch (err) { error.value = String(err) }
   loading.value = false
-  if (reconciled.value) emit('done')
 }
 
 async function runReconcile(): Promise<void> {
@@ -118,6 +131,7 @@ async function runReconcile(): Promise<void> {
     success.value = 'تطبیق لایه ۱ انجام شد'
     reconciled.value = true
     await load()
+    emit('done')
   } catch (err) { error.value = String(err) }
   running.value = false
 }

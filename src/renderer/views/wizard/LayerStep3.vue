@@ -6,11 +6,17 @@
         <v-col cols="12" md="3"><v-card color="success" variant="tonal"><v-card-title>تطبیق‌یافته</v-card-title><v-card-text class="text-h5 font-weight-bold">{{ stats.matched }}</v-card-text></v-card></v-col>
         <v-col cols="12" md="3"><v-card color="warning" variant="tonal"><v-card-title>پیشنهادها</v-card-title><v-card-text class="text-h5 font-weight-bold">{{ stats.pending }}</v-card-text></v-card></v-col>
         <v-col cols="12" md="3"><v-card color="error" variant="tonal"><v-card-title>تطبیق‌نیافته</v-card-title><v-card-text class="text-h5 font-weight-bold">{{ stats.unmatched }}</v-card-text></v-card></v-col>
-        <v-col cols="12" md="3" class="d-flex align-center">
+        <v-col cols="12" md="3" class="d-flex align-center gap-2">
           <v-btn v-if="!reconciled" color="primary" block :loading="running" @click="runReconciliation">اجرای تطبیق لایه ۳</v-btn>
-          <v-chip v-else color="success" size="large" prepend-icon="mdi-check-circle">تکمیل شد</v-chip>
+          <template v-else>
+            <v-chip color="success" size="large" prepend-icon="mdi-check-circle">تکمیل شد</v-chip>
+            <v-btn color="primary" variant="tonal" prepend-icon="mdi-arrow-left" @click="$emit('next')">مرحله بعد</v-btn>
+          </template>
         </v-col>
       </v-row>
+      <v-alert v-if="alreadyDone" type="info" variant="tonal" class="mb-4" prepend-icon="mdi-information">
+        داده جدیدی برای پردازش وجود ندارد. برای مشاهده نتایج از بخش <strong>گزارش‌ها</strong> اقدام فرمایید.
+      </v-alert>
       <v-alert v-if="error" type="error" class="mb-4">{{ error }}</v-alert>
       <v-alert v-if="success" type="success" class="mb-4">{{ success }}</v-alert>
 
@@ -55,13 +61,14 @@
 import { computed, onMounted, ref } from 'vue'
 
 defineProps<{ active: boolean }>()
-const emit = defineEmits<{ done: [] }>()
+const emit = defineEmits<{ done: []; next: [] }>()
 
 const rows = ref<Layer3RowDto[]>([])
 const running = ref(false)
 const error = ref('')
 const success = ref('')
 const reconciled = ref(false)
+const alreadyDone = ref(false)
 
 const stats = computed(() => ({
   matched: rows.value.filter(r => r.status === 'matched' || r.status === 'manual').length,
@@ -88,8 +95,14 @@ function statusLabel(row: Layer3RowDto): string {
 
 async function load(): Promise<void> {
   error.value = ''
-  try { rows.value = await window.api.layer3.list() } catch (err) { error.value = errorMessage(err) }
-  if (reconciled.value) emit('done')
+  try {
+    rows.value = await window.api.layer3.list()
+    if (rows.value.length > 0 && stats.value.unmatched === 0 && stats.value.pending === 0) {
+      reconciled.value = true
+      alreadyDone.value = true
+      emit('done')
+    }
+  } catch (err) { error.value = errorMessage(err) }
 }
 
 async function runReconciliation(): Promise<void> {
@@ -108,6 +121,7 @@ async function runReconciliation(): Promise<void> {
       : 'تطبیق لایه ۳ انجام شد'
     reconciled.value = true
     await load()
+    emit('done')
   } catch (err) { error.value = errorMessage(err) } finally { running.value = false }
 }
 
