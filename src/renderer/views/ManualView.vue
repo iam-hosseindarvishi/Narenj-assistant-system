@@ -18,7 +18,12 @@
         <v-alert v-if="error" type="error" class="mb-4">{{ error }}</v-alert>
         <v-alert v-if="success" type="success" class="mb-4">{{ success }}</v-alert>
 
-        <v-row v-if="accountingRecords.length > 0 || sourceRecords.length > 0">
+        <v-alert v-if="filterAmount !== null" type="info" variant="tonal" class="mb-4" closable @click:close="clearFilter">
+          فیلتر خودکار فعال است: مبلغ <strong>{{ filterAmount.toLocaleString() }}</strong> ریال
+          <span class="text-caption mr-2">(فقط رکوردهای حسابداری با این مبلغ نمایش داده می‌شوند)</span>
+        </v-alert>
+
+        <v-row v-if="allAccountingRecords.length > 0 || sourceRecords.length > 0">
           <!-- Source side (bank or pos) -->
           <v-col cols="12" md="6">
             <v-card variant="outlined">
@@ -33,6 +38,7 @@
                   density="compact"
                   :items-per-page="15"
                   class="text-body-2"
+                  @click:row="onSourceRowClick"
                 >
                   <template #item.amount="{ item }">{{ item.amount.toLocaleString() }}</template>
                   <template #item.label="{ item }">
@@ -55,11 +61,15 @@
           <!-- Accounting side -->
           <v-col cols="12" md="6">
             <v-card variant="outlined">
-              <v-card-title class="text-subtitle-1 pb-0">حسابداری <v-chip size="small" color="grey" class="mr-1">{{ accountingRecords.length }}</v-chip></v-card-title>
+              <v-card-title class="text-subtitle-1 pb-0">
+                حسابداری
+                <v-chip size="small" color="grey" class="mr-1">{{ filteredAccountingRecords.length }}</v-chip>
+                <v-chip v-if="filterAmount !== null" size="small" color="info" class="mr-1">فیلتر شده</v-chip>
+              </v-card-title>
               <v-card-text class="pt-2">
                 <v-data-table
                   :headers="accountingHeaders"
-                  :items="accountingRecords"
+                  :items="filteredAccountingRecords"
                   item-value="id"
                   show-select
                   v-model="selectedAccounting"
@@ -104,6 +114,7 @@ const error = ref('')
 const success = ref('')
 const records = ref<RecordItem[]>([])
 const loaded = ref(false)
+const filterAmount = ref<number | null>(null)
 
 const selectedSource = ref<RecordItem[]>([])
 const selectedAccounting = ref<RecordItem[]>([])
@@ -130,7 +141,26 @@ const accountingHeaders = [
 ]
 
 const sourceRecords = computed(() => records.value.filter(r => r.system === system.value))
-const accountingRecords = computed(() => records.value.filter(r => r.system === 'accounting'))
+const allAccountingRecords = computed(() => records.value.filter(r => r.system === 'accounting'))
+
+const filteredAccountingRecords = computed(() => {
+  if (filterAmount.value === null) return allAccountingRecords.value
+  return allAccountingRecords.value.filter(r => Math.abs(r.amount - filterAmount.value!) < 0.01)
+})
+
+function onSourceRowClick(_event: Event, { item }: { item: RecordItem }): void {
+  if (filterAmount.value === item.amount) {
+    clearFilter()
+  } else {
+    filterAmount.value = item.amount
+    selectedAccounting.value = []
+  }
+}
+
+function clearFilter(): void {
+  filterAmount.value = null
+  selectedAccounting.value = []
+}
 
 async function load(clearMessages = true): Promise<void> {
   if (clearMessages) {
@@ -139,6 +169,7 @@ async function load(clearMessages = true): Promise<void> {
   }
   selectedSource.value = []
   selectedAccounting.value = []
+  filterAmount.value = null
   try {
     records.value = await window.api.manual.list({
       from: from.value || undefined,
