@@ -116,8 +116,8 @@ const records = ref<RecordItem[]>([])
 const loaded = ref(false)
 const filterAmount = ref<number | null>(null)
 
-const selectedSource = ref<RecordItem[]>([])
-const selectedAccounting = ref<RecordItem[]>([])
+const selectedSource = ref<number[]>([])
+const selectedAccounting = ref<number[]>([])
 
 const sourceSystems = [
   { title: 'بانک', value: 'bank' },
@@ -185,8 +185,8 @@ async function link(): Promise<void> {
   success.value = ''
   try {
     const selection = [
-      ...selectedAccounting.value.map(item => ({ system: 'accounting' as const, id: item.id })),
-      ...selectedSource.value.map(item => ({ system: system.value as 'bank' | 'pos', id: item.id }))
+      ...selectedAccounting.value.map(id => ({ system: 'accounting' as const, id })),
+      ...selectedSource.value.map(id => ({ system: system.value as 'bank' | 'pos', id }))
     ]
     await window.api.manual.link(selection)
     await load(false)

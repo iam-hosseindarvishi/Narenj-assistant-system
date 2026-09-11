@@ -111,9 +111,15 @@ export class ManualMatchingService {
   }
 
   private setStatuses(ids: { bank: number | null; accounting: number | null; pos: number | null }, status: string): void {
-    if (ids.bank !== null) this.conn.prepare('UPDATE bank_transactions SET status = ? WHERE id = ?').run(status, ids.bank)
-    if (ids.accounting !== null) this.conn.prepare('UPDATE accounting_entries SET status = ? WHERE id = ?').run(status, ids.accounting)
-    if (ids.pos !== null) this.conn.prepare('UPDATE pos_transactions SET status = ? WHERE id = ?').run(status, ids.pos)
+    if (ids.bank !== null) {
+      this.conn.prepare('UPDATE bank_transactions SET status = ? WHERE id = ?').run(status, ids.bank)
+    }
+    if (ids.accounting !== null) {
+      this.conn.prepare('UPDATE accounting_entries SET status = ? WHERE id = ?').run(status, ids.accounting)
+    }
+    if (ids.pos !== null) {
+      this.conn.prepare('UPDATE pos_transactions SET status = ? WHERE id = ?').run(status, ids.pos)
+    }
   }
 
   private audit(action: string, entityId: number, userId: number | null, value: unknown): void {
