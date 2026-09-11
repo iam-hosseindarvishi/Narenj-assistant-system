@@ -13,7 +13,7 @@ export interface ManualRecord {
 export interface ManualQuery {
   from?: string
   to?: string
-  system?: 'bank' | 'accounting' | 'pos' | 'all'
+  system?: 'bank' | 'pos'
 }
 
 export interface ManualSelection {
@@ -30,9 +30,8 @@ export class ManualMatchingService {
 
   list(query: ManualQuery = {}): ManualRecord[] {
     const records = [
-      ...(query.system === 'accounting' || query.system === 'pos' ? [] : this.bank(query)),
-      ...(query.system === 'bank' || query.system === 'pos' ? [] : this.accounting(query)),
-      ...(query.system === 'bank' || query.system === 'accounting' ? [] : this.pos(query))
+      ...this.accounting(query),
+      ...(query.system === 'pos' ? this.pos(query) : this.bank(query))
     ]
     return records.sort((a, b) => a.dateJalali.localeCompare(b.dateJalali))
   }

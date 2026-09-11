@@ -76,6 +76,11 @@ export class Layer2Reconciler {
     // Write fee aggregations
     this.writeAggregations(aggregation)
 
+    // Mark aggregated fees as matched so they don't leak into manual reconciliation
+    for (const fee of unmatchedFees) {
+      this.updateBankStatus(fee.id, 'matched')
+    }
+
     return {
       matched,
       aggregated: aggregation.length,

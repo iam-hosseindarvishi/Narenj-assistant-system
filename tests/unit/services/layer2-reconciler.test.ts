@@ -84,6 +84,6 @@ describe('Layer2Reconciler', () => {
     const second = reconciler.reconcile()
 
     expect(second.matched).toBe(0)
-    expect(second.fees.reduce((sum, fee) => sum + fee.totalAmount, 0)).toBe(firstTotal)
+    expect(second.fees.reduce((sum, fee) => sum + fee.totalAmount, 0)).toBe(0)
   })
 })
