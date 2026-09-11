@@ -130,8 +130,27 @@ export class ManualMatchingService {
         OR (pos_tx_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pos_transactions WHERE id = reconciliation_links.pos_tx_id))
         OR (bank_tx_id IS NOT NULL AND EXISTS (SELECT 1 FROM bank_transactions WHERE id = reconciliation_links.bank_tx_id AND status != 'unmatched'))
         OR (accounting_id IS NOT NULL AND EXISTS (SELECT 1 FROM accounting_entries WHERE id = reconciliation_links.accounting_id AND status != 'unmatched'))
+        OR (pos_tx_id IS NOT NULL AND EXISTS (SELECT 1 FROM pos_transactions WHERE id = reconciliation_links.pos_tx_id AND status != 'unmatched'))
       )
     `).run()
     return result.changes
+  }
+
+  /** Remove duplicate and null-id manual links created by the frontend. */
+  cleanupBrokenManualLinks(): number {
+    const result = this.conn.prepare(`
+      DELETE FROM reconciliation_links
+      WHERE match_type = 'manual'
+        AND (bank_tx_id IS NULL AND accounting_id IS NULL AND pos_tx_id IS NULL)
+    `).run()
+    const dedupe = this.conn.prepare(`
+      DELETE FROM reconciliation_links
+      WHERE id NOT IN (
+        SELECT MIN(id) FROM reconciliation_links
+        WHERE match_type = 'manual'
+        GROUP BY layer, bank_tx_id, accounting_id, pos_tx_id
+      ) AND match_type = 'manual'
+    `).run()
+    return result.changes + dedupe.changes
   }
 }

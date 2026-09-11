@@ -268,6 +268,9 @@ export class Layer3Reconciler {
             AND description NOT LIKE '%ثبت چک%'
           ))
           AND NOT EXISTS (
+            SELECT 1 FROM reconciliation_links rl WHERE rl.bank_tx_id = bank_transactions.id
+          )
+          AND NOT EXISTS (
             SELECT 1 FROM accounting_entries ae
             WHERE ae.entry_type = 'fee'
               AND ae.date_jalali = bank_transactions.date_jalali
@@ -287,6 +290,9 @@ export class Layer3Reconciler {
               description, entry_type as entryType, status
        FROM accounting_entries
        WHERE status = 'unmatched'
+         AND NOT EXISTS (
+           SELECT 1 FROM reconciliation_links rl WHERE rl.accounting_id = accounting_entries.id
+         )
        ORDER BY date_jalali ASC`
     ).all() as AccountingEntryCandidate[]
   }
