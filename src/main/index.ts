@@ -40,6 +40,8 @@ function registerIpcHandlers(manager: DatabaseManager): void {
   const users = new UserService(conn)
   const audit = new AuditLogger(conn)
   const manual = new ManualMatchingService(conn)
+  const cleaned = manual.cleanupOrphanedLinks()
+  if (cleaned > 0) console.log(`Cleaned ${cleaned} orphaned suggested links`)
   const templates = new TemplateRepository(conn)
   const importer = new FileImporter(conn)
   const queries = new QueryHelper(conn)

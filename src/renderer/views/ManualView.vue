@@ -132,9 +132,11 @@ const accountingHeaders = [
 const sourceRecords = computed(() => records.value.filter(r => r.system === system.value))
 const accountingRecords = computed(() => records.value.filter(r => r.system === 'accounting'))
 
-async function load(): Promise<void> {
-  error.value = ''
-  success.value = ''
+async function load(clearMessages = true): Promise<void> {
+  if (clearMessages) {
+    error.value = ''
+    success.value = ''
+  }
   selectedSource.value = []
   selectedAccounting.value = []
   try {
@@ -156,10 +158,8 @@ async function link(): Promise<void> {
       ...selectedSource.value.map(item => ({ system: system.value as 'bank' | 'pos', id: item.id }))
     ]
     await window.api.manual.link(selection)
+    await load(false)
     success.value = `تطبیق ${selection.length} رکورد با موفقیت انجام شد`
-    selectedSource.value = []
-    selectedAccounting.value = []
-    await load()
   } catch (err) { error.value = String(err) }
 }
 

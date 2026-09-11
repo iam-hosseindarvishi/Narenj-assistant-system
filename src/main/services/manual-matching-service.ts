@@ -61,13 +61,29 @@ export class ManualMatchingService {
   }
 
   private bank(query: ManualQuery): ManualRecord[] {
-    const rows = this.rows('bank_transactions', query) as Array<Record<string, any>>
-    return rows.map(row => ({ id: row.id, system: 'bank', dateJalali: row.date_jalali, amount: row.deposit_amount || row.withdrawal_amount, label: row.description || row.reference || '', status: row.status, suggestion: this.suggested(row.id, 'bank_transactions') }))
+    const args: unknown[] = []
+    const filters = ["bt.status = 'unmatched'", "bt.tx_type NOT IN ('fee')"]
+    if (query.from) { filters.push('bt.date_jalali >= ?'); args.push(query.from) }
+    if (query.to) { filters.push('bt.date_jalali <= ?'); args.push(query.to) }
+    const rows = this.conn.prepare(`
+      SELECT bt.* FROM bank_transactions bt
+      WHERE ${filters.join(' AND ')}
+      ORDER BY bt.date_jalali
+    `).all(...args) as Array<Record<string, unknown>>
+    return rows.map(row => ({ id: row.id as number, system: 'bank' as const, dateJalali: String(row.date_jalali ?? ''), amount: Number(row.deposit_amount || row.withdrawal_amount), label: String(row.description || row.reference || ''), status: String(row.status ?? 'unmatched'), suggestion: this.suggested(row.id as number, 'bank_transactions') }))
   }
 
   private accounting(query: ManualQuery): ManualRecord[] {
-    const rows = this.rows('accounting_entries', query) as Array<Record<string, any>>
-    return rows.map(row => ({ id: row.id, system: 'accounting', dateJalali: row.date_jalali, amount: row.credit || row.debit, label: row.description || String(row.entry_id), status: row.status, suggestion: this.suggested(row.id, 'accounting_entries') }))
+    const args: unknown[] = []
+    const filters = ["ae.status = 'unmatched'"]
+    if (query.from) { filters.push('ae.date_jalali >= ?'); args.push(query.from) }
+    if (query.to) { filters.push('ae.date_jalali <= ?'); args.push(query.to) }
+    const rows = this.conn.prepare(`
+      SELECT ae.* FROM accounting_entries ae
+      WHERE ${filters.join(' AND ')}
+      ORDER BY ae.date_jalali
+    `).all(...args) as Array<Record<string, unknown>>
+    return rows.map(row => ({ id: row.id as number, system: 'accounting' as const, dateJalali: String(row.date_jalali ?? ''), amount: Number(row.credit || row.debit), label: String(row.description || String(row.entry_id ?? '')), status: String(row.status ?? 'unmatched'), suggestion: this.suggested(row.id as number, 'accounting_entries') }))
   }
 
   private pos(query: ManualQuery): ManualRecord[] {
@@ -84,7 +100,14 @@ export class ManualMatchingService {
   }
 
   private suggested(id: number, table: string): boolean {
-    return Boolean(this.conn.prepare(`SELECT 1 FROM reconciliation_links WHERE match_type = 'suggested' AND ${table === 'bank_transactions' ? 'bank_tx_id' : table === 'accounting_entries' ? 'accounting_id' : 'pos_tx_id'} = ?`).get(id))
+    const col = table === 'bank_transactions' ? 'bank_tx_id' : table === 'accounting_entries' ? 'accounting_id' : 'pos_tx_id'
+    return Boolean(this.conn.prepare(`
+      SELECT 1 FROM reconciliation_links rl
+      WHERE rl.match_type = 'suggested' AND rl.${col} = ?
+        AND EXISTS (
+          SELECT 1 FROM ${table} t WHERE t.id = rl.${col} AND t.status = 'unmatched'
+        )
+    `).get(id))
   }
 
   private setStatuses(ids: { bank: number | null; accounting: number | null; pos: number | null }, status: string): void {
@@ -95,5 +118,20 @@ export class ManualMatchingService {
 
   private audit(action: string, entityId: number, userId: number | null, value: unknown): void {
     this.conn.prepare('INSERT INTO audit_logs (user_id, action, entity_type, entity_id, new_value) VALUES (?, ?, ?, ?, ?)').run(userId, action, 'reconciliation_links', entityId, JSON.stringify(value))
+  }
+
+  /** Remove orphaned suggested links that reference deleted or already-matched records. */
+  cleanupOrphanedLinks(): number {
+    const result = this.conn.prepare(`
+      DELETE FROM reconciliation_links
+      WHERE match_type = 'suggested' AND (
+        (bank_tx_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM bank_transactions WHERE id = reconciliation_links.bank_tx_id))
+        OR (accounting_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM accounting_entries WHERE id = reconciliation_links.accounting_id))
+        OR (pos_tx_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pos_transactions WHERE id = reconciliation_links.pos_tx_id))
+        OR (bank_tx_id IS NOT NULL AND EXISTS (SELECT 1 FROM bank_transactions WHERE id = reconciliation_links.bank_tx_id AND status != 'unmatched'))
+        OR (accounting_id IS NOT NULL AND EXISTS (SELECT 1 FROM accounting_entries WHERE id = reconciliation_links.accounting_id AND status != 'unmatched'))
+      )
+    `).run()
+    return result.changes
   }
 }
