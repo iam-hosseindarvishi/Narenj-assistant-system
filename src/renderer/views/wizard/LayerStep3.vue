@@ -6,11 +6,11 @@
         <v-col cols="12" md="3"><v-card color="success" variant="tonal"><v-card-title>تطبیق‌یافته</v-card-title><v-card-text class="text-h5 font-weight-bold">{{ stats.matched }}</v-card-text></v-card></v-col>
         <v-col cols="12" md="3"><v-card color="warning" variant="tonal"><v-card-title>پیشنهادها</v-card-title><v-card-text class="text-h5 font-weight-bold">{{ stats.pending }}</v-card-text></v-card></v-col>
         <v-col cols="12" md="3"><v-card color="error" variant="tonal"><v-card-title>تطبیق‌نیافته</v-card-title><v-card-text class="text-h5 font-weight-bold">{{ stats.unmatched }}</v-card-text></v-card></v-col>
-        <v-col cols="12" md="3" class="d-flex align-center gap-2">
+        <v-col cols="12" md="3" class="d-flex flex-column align-start gap-3">
           <v-btn v-if="!reconciled" color="primary" block :loading="running" @click="runReconciliation">اجرای تطبیق لایه ۳</v-btn>
           <template v-else>
             <v-chip color="success" size="large" prepend-icon="mdi-check-circle">تکمیل شد</v-chip>
-            <v-btn color="primary" variant="tonal" prepend-icon="mdi-arrow-left" @click="$emit('next')">مرحله بعد</v-btn>
+            <v-btn color="primary" variant="tonal" prepend-icon="mdi-arrow-right" class="mt-2" @click="$emit('next')">مرحله بعد</v-btn>
           </template>
         </v-col>
       </v-row>
@@ -24,9 +24,11 @@
         <thead>
           <tr>
             <th class="text-right">تاریخ</th>
-            <th class="text-right">مبلغ (ریال)</th>
+            <th class="text-right">مبلغ بانک (ریال)</th>
             <th class="text-right">شرح بانک</th>
             <th class="text-right">سند حسابداری</th>
+            <th class="text-right">بدهکار</th>
+            <th class="text-right">بستانکار</th>
             <th class="text-right">شرح سند</th>
             <th class="text-right">وضعیت</th>
             <th class="text-right">عملیات</th>
@@ -36,9 +38,25 @@
           <tr v-for="row in rows" :key="row.bankTxId">
             <td>{{ row.dateJalali }}</td>
             <td>{{ formatAmount(row.amount) }}</td>
-            <td class="text-truncate" style="max-width: 260px">{{ row.bankDescription }}</td>
+            <td>
+              <v-tooltip location="bottom" :disabled="!row.bankDescription || row.bankDescription.length <= 40">
+                <template #activator="{ props: tipProps }">
+                  <span v-bind="tipProps" class="text-truncate d-inline-block" style="max-width: 220px">{{ row.bankDescription || '—' }}</span>
+                </template>
+                <span style="white-space: pre-wrap; max-width: 500px; display: block;">{{ row.bankDescription }}</span>
+              </v-tooltip>
+            </td>
             <td>{{ row.accountingEntryId ?? '—' }}</td>
-            <td class="text-truncate" style="max-width: 300px">{{ row.accountingDescription ?? '—' }}</td>
+            <td :class="row.accountingDebit ? 'text-success font-weight-bold' : ''">{{ row.accountingDebit ? formatAmount(row.accountingDebit) : '—' }}</td>
+            <td :class="row.accountingCredit ? 'text-error font-weight-bold' : ''">{{ row.accountingCredit ? formatAmount(row.accountingCredit) : '—' }}</td>
+            <td>
+              <v-tooltip location="bottom" :disabled="!row.accountingDescription || row.accountingDescription.length <= 40">
+                <template #activator="{ props: tipProps }">
+                  <span v-bind="tipProps" class="text-truncate d-inline-block" style="max-width: 260px">{{ row.accountingDescription ?? '—' }}</span>
+                </template>
+                <span style="white-space: pre-wrap; max-width: 500px; display: block;">{{ row.accountingDescription }}</span>
+              </v-tooltip>
+            </td>
             <td><v-chip :color="statusColor(row)" size="small">{{ statusLabel(row) }}</v-chip></td>
             <td>
               <template v-if="row.matchType === 'suggested' && row.linkId !== null">
@@ -49,7 +67,7 @@
             </td>
           </tr>
           <tr v-if="rows.length === 0">
-            <td colspan="7" class="text-center text-medium-emphasis py-4">داده‌ای برای نمایش وجود ندارد</td>
+            <td colspan="9" class="text-center text-medium-emphasis py-4">داده‌ای برای نمایش وجود ندارد</td>
           </tr>
         </tbody>
       </v-table>

@@ -3,11 +3,11 @@
     <v-card-title>لایه ۲: کارمزدهای بانکی</v-card-title>
     <v-card-subtitle>تجمیع روزانه کارمزدها و تطبیق با اسناد حسابداری</v-card-subtitle>
     <v-card-text>
-      <div class="mb-4 d-flex align-center gap-2">
+      <div class="mb-4 d-flex flex-column align-start gap-3">
         <v-btn v-if="!reconciled" color="primary" :loading="running" @click="runReconciliation">اجرای تطبیق کارمزد</v-btn>
         <template v-else>
           <v-chip color="success" size="large" prepend-icon="mdi-check-circle">تکمیل شد</v-chip>
-          <v-btn color="primary" variant="tonal" prepend-icon="mdi-arrow-left" @click="$emit('next')">مرحله بعد</v-btn>
+          <v-btn color="primary" variant="tonal" prepend-icon="mdi-arrow-right" @click="$emit('next')">مرحله بعد</v-btn>
         </template>
       </div>
       <v-alert v-if="alreadyDone" type="info" variant="tonal" class="mb-4" prepend-icon="mdi-information">

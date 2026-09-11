@@ -7,11 +7,11 @@
         <v-col cols="12" sm="6" md="3"><v-card color="success" variant="tonal"><v-card-title>تطبیق‌شده</v-card-title><v-card-text class="text-h5">{{ counts.matched }}</v-card-text></v-card></v-col>
         <v-col cols="12" sm="6" md="3"><v-card color="warning" variant="tonal"><v-card-title>در انتظار</v-card-title><v-card-text class="text-h5">{{ counts.pending }}</v-card-text></v-card></v-col>
         <v-col cols="12" sm="6" md="3"><v-card color="error" variant="tonal"><v-card-title>تطبیق‌نیافته</v-card-title><v-card-text class="text-h5">{{ counts.unmatched }}</v-card-text></v-card></v-col>
-        <v-col cols="12" md="3" class="d-flex align-center gap-2">
+        <v-col cols="12" md="3" class="d-flex flex-column align-start gap-1">
           <v-btn v-if="!reconciled" color="primary" :loading="running" @click="runReconcile">اجرای تطبیق پوز و بانک</v-btn>
           <template v-else>
             <v-chip color="success" size="large" prepend-icon="mdi-check-circle">تکمیل شد</v-chip>
-            <v-btn color="primary" variant="tonal" prepend-icon="mdi-arrow-left" @click="$emit('next')">مرحله بعد</v-btn>
+            <v-btn color="primary" variant="tonal" prepend-icon="mdi-arrow-right" class="mt-2" @click="$emit('next')">مرحله بعد</v-btn>
           </template>
         </v-col>
       </v-row>
@@ -56,9 +56,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
-const props = defineProps<{ active: boolean }>()
+defineProps<{ active: boolean }>()
 const emit = defineEmits<{ done: []; next: [] }>()
 
 const rows = ref<Layer1RowDto[]>([])

@@ -44,6 +44,8 @@ export interface Layer3ListRow {
   accountingId: number | null
   accountingEntryId: number | null
   accountingDescription: string | null
+  accountingDebit: number | null
+  accountingCredit: number | null
   linkId: number | null
   matchType: string | null
   confidence: number | null
@@ -172,6 +174,7 @@ export class QueryHelper {
       SELECT bt.id as bankTxId, bt.date_jalali as dateJalali, bt.description as bankDescription, bt.status,
              (COALESCE(bt.deposit_amount, 0) + COALESCE(bt.withdrawal_amount, 0)) as amount,
              ae.id as accountingId, ae.entry_id as accountingEntryId, ae.description as accountingDescription,
+             ae.debit as accountingDebit, ae.credit as accountingCredit,
              rl.id as linkId, rl.match_type as matchType, rl.confidence
       FROM bank_transactions bt
       LEFT JOIN reconciliation_links rl ON rl.bank_tx_id = bt.id AND rl.layer = 3
@@ -202,6 +205,8 @@ export class QueryHelper {
       accountingId: r.accountingId === null || r.accountingId === undefined ? null : Number(r.accountingId),
       accountingEntryId: r.accountingEntryId === null || r.accountingEntryId === undefined ? null : Number(r.accountingEntryId),
       accountingDescription: r.accountingDescription === null || r.accountingDescription === undefined ? null : String(r.accountingDescription),
+      accountingDebit: r.accountingDebit === null || r.accountingDebit === undefined ? null : Number(r.accountingDebit),
+      accountingCredit: r.accountingCredit === null || r.accountingCredit === undefined ? null : Number(r.accountingCredit),
       linkId: r.linkId === null || r.linkId === undefined ? null : Number(r.linkId),
       matchType: r.matchType === null || r.matchType === undefined ? null : String(r.matchType),
       confidence: r.confidence === null || r.confidence === undefined ? null : Number(r.confidence)

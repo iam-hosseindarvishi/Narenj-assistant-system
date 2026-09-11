@@ -56,6 +56,8 @@ interface Layer3RowDto {
   accountingId: number | null
   accountingEntryId: number | null
   accountingDescription: string | null
+  accountingDebit: number | null
+  accountingCredit: number | null
   linkId: number | null
   matchType: string | null
   confidence: number | null

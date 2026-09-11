@@ -7,7 +7,7 @@
         <v-col cols="12" sm="6" md="3"><v-card color="success" variant="tonal"><v-card-title>تطبیق‌شده</v-card-title><v-card-text class="text-h5">{{ counts.matched }}</v-card-text></v-card></v-col>
         <v-col cols="12" sm="6" md="3"><v-card color="error" variant="tonal"><v-card-title>تطبیق‌نیافته</v-card-title><v-card-text class="text-h5">{{ counts.unmatched }}</v-card-text></v-card></v-col>
         <v-col cols="12" sm="6" md="3"><v-card color="info" variant="tonal"><v-card-title>گروه تجمیعی</v-card-title><v-card-text class="text-h5">{{ aggregatedCount }}</v-card-text></v-card></v-col>
-        <v-col cols="12" md="3" class="d-flex align-center gap-2">
+        <v-col cols="12" md="3" class="d-flex flex-column align-start gap-3">
           <v-btn v-if="!reconciled" color="primary" block :loading="running" @click="runReconcile">اجرای تطبیق ریز پوز</v-btn>
           <template v-else>
             <v-chip color="success" size="large" prepend-icon="mdi-check-circle">تکمیل شد</v-chip>
@@ -45,7 +45,14 @@
                   <td>{{ row.cardNumberMasked }}</td>
                   <td>{{ formatAmount(row.amount) }}</td>
                   <td>{{ row.entryId ?? '—' }}</td>
-                  <td class="text-truncate" style="max-width: 320px">{{ row.accountingDescription ?? '—' }}</td>
+                  <td>
+                    <v-tooltip location="bottom" :disabled="!row.accountingDescription || row.accountingDescription.length <= 40">
+                      <template #activator="{ props: tipProps }">
+                        <span v-bind="tipProps" class="text-truncate d-inline-block" style="max-width: 280px">{{ row.accountingDescription ?? '—' }}</span>
+                      </template>
+                      <span style="white-space: pre-wrap; max-width: 500px; display: block;">{{ row.accountingDescription }}</span>
+                    </v-tooltip>
+                  </td>
                   <td><v-chip :color="row.status === 'matched' || row.status === 'manual' ? 'success' : 'error'" size="small">{{ row.status === 'matched' ? 'تطبیق‌شده' : row.status === 'manual' ? 'دستی' : 'تطبیق‌نیافته' }}</v-chip></td>
                 </tr>
               </tbody>
