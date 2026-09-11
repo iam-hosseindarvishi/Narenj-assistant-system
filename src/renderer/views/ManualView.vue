@@ -3,38 +3,165 @@
     <v-card>
       <v-card-title>تطبیق دستی</v-card-title>
       <v-card-text>
-        <v-row>
-          <v-col cols="12" md="3"><v-text-field v-model="from" label="از تاریخ" /></v-col>
-          <v-col cols="12" md="3"><v-text-field v-model="to" label="تا تاریخ" /></v-col>
-          <v-col cols="12" md="3"><v-select v-model="system" :items="systems" label="سیستم" /></v-col>
-          <v-col cols="12" md="3" class="d-flex align-center ga-2"><v-btn @click="load">نمایش</v-btn><v-btn color="primary" :disabled="selected.length < 2" @click="link">تطبیق</v-btn></v-col>
-        </v-row>
-        <v-alert v-if="error" type="error">{{ error }}</v-alert>
-        <v-row>
-          <v-col v-for="name in visibleSystems" :key="name" cols="12" :md="12 / visibleSystems.length">
-            <v-data-table :headers="headers" :items="groups[name]" item-value="id" show-select v-model="selectedBySystem[name]" :title="titles[name]" @update:model-value="syncSelected(name, $event)">
-              <template #item.amount="{ item }">{{ item.amount.toLocaleString() }}</template>
-              <template #item.suggestion="{ item }"><v-chip v-if="item.suggestion" color="warning">پیشنهاد</v-chip></template>
-            </v-data-table>
+        <v-row class="mb-4">
+          <v-col cols="12" md="3"><v-text-field v-model="from" label="از تاریخ" density="compact" variant="outlined" /></v-col>
+          <v-col cols="12" md="3"><v-text-field v-model="to" label="تا تاریخ" density="compact" variant="outlined" /></v-col>
+          <v-col cols="12" md="3">
+            <v-select v-model="system" :items="sourceSystems" item-title="title" item-value="value" label="سیستم" density="compact" variant="outlined" />
+          </v-col>
+          <v-col cols="12" md="3" class="d-flex align-center ga-2">
+            <v-btn variant="outlined" @click="load">نمایش</v-btn>
+            <v-btn color="primary" :disabled="selectedAccounting.length === 0 || selectedSource.length === 0" @click="link">تطبیق</v-btn>
           </v-col>
         </v-row>
+
+        <v-alert v-if="error" type="error" class="mb-4">{{ error }}</v-alert>
+        <v-alert v-if="success" type="success" class="mb-4">{{ success }}</v-alert>
+
+        <v-row v-if="accountingRecords.length > 0 || sourceRecords.length > 0">
+          <!-- Source side (bank or pos) -->
+          <v-col cols="12" md="6">
+            <v-card variant="outlined">
+              <v-card-title class="text-subtitle-1 pb-0">{{ sourceLabel }} <v-chip size="small" color="grey" class="mr-1">{{ sourceRecords.length }}</v-chip></v-card-title>
+              <v-card-text class="pt-2">
+                <v-data-table
+                  :headers="sourceHeaders"
+                  :items="sourceRecords"
+                  item-value="id"
+                  show-select
+                  v-model="selectedSource"
+                  density="compact"
+                  :items-per-page="15"
+                  class="text-body-2"
+                >
+                  <template #item.amount="{ item }">{{ item.amount.toLocaleString() }}</template>
+                  <template #item.label="{ item }">
+                    <v-tooltip location="bottom" :disabled="!item.label || item.label.length <= 50">
+                      <template #activator="{ props: tipProps }">
+                        <span v-bind="tipProps" class="text-truncate d-inline-block" style="max-width: 280px">{{ item.label || '—' }}</span>
+                      </template>
+                      <span style="white-space: pre-wrap; max-width: 500px; display: block;">{{ item.label }}</span>
+                    </v-tooltip>
+                  </template>
+                  <template #item.suggestion="{ item }">
+                    <v-chip v-if="item.suggestion" color="warning" size="x-small">پیشنهاد</v-chip>
+                    <span v-else>—</span>
+                  </template>
+                </v-data-table>
+              </v-card-text>
+            </v-card>
+          </v-col>
+
+          <!-- Accounting side -->
+          <v-col cols="12" md="6">
+            <v-card variant="outlined">
+              <v-card-title class="text-subtitle-1 pb-0">حسابداری <v-chip size="small" color="grey" class="mr-1">{{ accountingRecords.length }}</v-chip></v-card-title>
+              <v-card-text class="pt-2">
+                <v-data-table
+                  :headers="accountingHeaders"
+                  :items="accountingRecords"
+                  item-value="id"
+                  show-select
+                  v-model="selectedAccounting"
+                  density="compact"
+                  :items-per-page="15"
+                  class="text-body-2"
+                >
+                  <template #item.amount="{ item }">{{ item.amount.toLocaleString() }}</template>
+                  <template #item.label="{ item }">
+                    <v-tooltip location="bottom" :disabled="!item.label || item.label.length <= 50">
+                      <template #activator="{ props: tipProps }">
+                        <span v-bind="tipProps" class="text-truncate d-inline-block" style="max-width: 280px">{{ item.label || '—' }}</span>
+                      </template>
+                      <span style="white-space: pre-wrap; max-width: 500px; display: block;">{{ item.label }}</span>
+                    </v-tooltip>
+                  </template>
+                  <template #item.suggestion="{ item }">
+                    <v-chip v-if="item.suggestion" color="warning" size="x-small">پیشنهاد</v-chip>
+                    <span v-else>—</span>
+                  </template>
+                </v-data-table>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+
+        <v-alert v-else-if="loaded" type="info" variant="tonal" class="mt-4">داده‌ای یافت نشد.</v-alert>
       </v-card-text>
     </v-card>
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+
 interface RecordItem { id: number; system: string; dateJalali: string; amount: number; label: string; suggestion?: boolean }
-const from = ref(''); const to = ref(''); const system = ref('all'); const error = ref(''); const records = ref<RecordItem[]>([])
-const systems = ['all', 'bank', 'accounting', 'pos']; const titles: Record<string, string> = { bank: 'بانک', accounting: 'حسابداری', pos: 'پوز' }
-const headers = [{ title: 'تاریخ', key: 'dateJalali' }, { title: 'مبلغ', key: 'amount' }, { title: 'شرح', key: 'label' }, { title: 'پیشنهاد', key: 'suggestion' }]
-const selectedBySystem = reactive<Record<string, RecordItem[]>>({ bank: [], accounting: [], pos: [] })
-const groups = computed(() => ({ bank: records.value.filter(r => r.system === 'bank'), accounting: records.value.filter(r => r.system === 'accounting'), pos: records.value.filter(r => r.system === 'pos') }))
-const visibleSystems = computed(() => (['bank', 'accounting', 'pos'] as const).filter(name => groups.value[name].length > 0))
-const selected = computed(() => Object.values(selectedBySystem).flat())
-async function load(): Promise<void> { error.value = ''; try { records.value = await window.api.manual.list({ from: from.value || undefined, to: to.value || undefined, system: system.value }) } catch (err) { error.value = String(err) } }
-function syncSelected(name: string, value: RecordItem[]): void { selectedBySystem[name] = value }
-async function link(): Promise<void> { try { await window.api.manual.link(selected.value.map(item => ({ system: item.system, id: item.id }))); Object.keys(selectedBySystem).forEach(name => { selectedBySystem[name] = [] }); await load() } catch (err) { error.value = String(err) } }
+
+const from = ref('')
+const to = ref('')
+const system = ref('bank')
+const error = ref('')
+const success = ref('')
+const records = ref<RecordItem[]>([])
+const loaded = ref(false)
+
+const selectedSource = ref<RecordItem[]>([])
+const selectedAccounting = ref<RecordItem[]>([])
+
+const sourceSystems = [
+  { title: 'بانک', value: 'bank' },
+  { title: 'پوز', value: 'pos' }
+]
+
+const sourceLabel = computed(() => system.value === 'pos' ? 'پوز' : 'بانک')
+
+const sourceHeaders = [
+  { title: 'تاریخ', key: 'dateJalali', width: '100px' },
+  { title: 'مبلغ', key: 'amount', width: '120px' },
+  { title: 'شرح', key: 'label' },
+  { title: 'پیشنهاد', key: 'suggestion', width: '80px' }
+]
+
+const accountingHeaders = [
+  { title: 'تاریخ', key: 'dateJalali', width: '100px' },
+  { title: 'مبلغ', key: 'amount', width: '120px' },
+  { title: 'شرح', key: 'label' },
+  { title: 'پیشنهاد', key: 'suggestion', width: '80px' }
+]
+
+const sourceRecords = computed(() => records.value.filter(r => r.system === system.value))
+const accountingRecords = computed(() => records.value.filter(r => r.system === 'accounting'))
+
+async function load(): Promise<void> {
+  error.value = ''
+  success.value = ''
+  selectedSource.value = []
+  selectedAccounting.value = []
+  try {
+    records.value = await window.api.manual.list({
+      from: from.value || undefined,
+      to: to.value || undefined,
+      system: system.value as 'bank' | 'pos'
+    })
+    loaded.value = true
+  } catch (err) { error.value = String(err) }
+}
+
+async function link(): Promise<void> {
+  error.value = ''
+  success.value = ''
+  try {
+    const selection = [
+      ...selectedAccounting.value.map(item => ({ system: 'accounting' as const, id: item.id })),
+      ...selectedSource.value.map(item => ({ system: system.value as 'bank' | 'pos', id: item.id }))
+    ]
+    await window.api.manual.link(selection)
+    success.value = `تطبیق ${selection.length} رکورد با موفقیت انجام شد`
+    selectedSource.value = []
+    selectedAccounting.value = []
+    await load()
+  } catch (err) { error.value = String(err) }
+}
+
 onMounted(load)
 </script>
