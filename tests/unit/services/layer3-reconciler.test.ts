@@ -113,6 +113,83 @@ describe('Layer3Reconciler', () => {
     expect(accEntry.description).toContain('987654')
   })
 
+  it('should auto-match via havale paren-number found in bank description', () => {
+    db.prepare(`
+      INSERT INTO bank_transactions (file_id, row_number, date_jalali, deposit_amount, withdrawal_amount, description, tx_type, status)
+      VALUES (1, 996, '1405/06/18', 30000000, 0, 'انتقال وجه شبا |140506030162267303', 'transfer', 'unmatched')
+    `).run()
+    const bankId = (db.prepare('SELECT last_insert_rowid() as id').get() as any).id
+
+    db.prepare(`
+      INSERT INTO accounting_entries (file_id, entry_id, date_jalali, debit, credit, description, entry_type, status)
+      VALUES 
+      (2, 9101, '1405/06/18', 30000000, 0, 'سند پرداخت(1094) حواله پرداختی (267303) کشاورزی', 'payment', 'unmatched'),
+      (2, 9102, '1405/06/18', 30000000, 0, 'سند پرداخت(1094) حواله پرداختی (141403) کشاورزی', 'payment', 'unmatched')
+    `).run()
+
+    const res = reconciler.reconcile()
+    expect(res.ok).toBe(true)
+
+    const link = db.prepare('SELECT * FROM reconciliation_links WHERE bank_tx_id = ?').get(bankId) as any
+    expect(link).toBeDefined()
+    expect(link.match_type).toBe(MatchType.Auto)
+    expect(link.confidence).toBe(0.85)
+
+    const accEntry = db.prepare('SELECT * FROM accounting_entries WHERE id = ?').get(link.accounting_id) as any
+    expect(accEntry.description).toContain('267303')
+
+    const bankTx = db.prepare('SELECT * FROM bank_transactions WHERE id = ?').get(bankId) as any
+    expect(bankTx.status).toBe(MatchStatus.Matched)
+  })
+
+  it('should auto-match via multi-number havale paren group against bank description', () => {
+    db.prepare(`
+      INSERT INTO bank_transactions (file_id, row_number, date_jalali, deposit_amount, withdrawal_amount, description, tx_type, status)
+      VALUES (1, 995, '1405/06/19', 45000000, 0, 'واریز شبا 89634370157', 'transfer', 'unmatched')
+    `).run()
+    const bankId = (db.prepare('SELECT last_insert_rowid() as id').get() as any).id
+
+    db.prepare(`
+      INSERT INTO accounting_entries (file_id, entry_id, date_jalali, debit, credit, description, entry_type, status)
+      VALUES 
+      (2, 9111, '1405/06/19', 45000000, 0, 'سند دریافت(5131) حواله (121697 8963437 89634370157) کشاورزی', 'receipt', 'unmatched'),
+      (2, 9112, '1405/06/19', 45000000, 0, 'سند دریافت(5104) حواله (375045 8963437 89634370159) کشاورزی', 'receipt', 'unmatched')
+    `).run()
+
+    const res = reconciler.reconcile()
+    expect(res.ok).toBe(true)
+
+    const link = db.prepare('SELECT * FROM reconciliation_links WHERE bank_tx_id = ?').get(bankId) as any
+    expect(link).toBeDefined()
+    expect(link.match_type).toBe(MatchType.Auto)
+
+    const accEntry = db.prepare('SELECT * FROM accounting_entries WHERE id = ?').get(link.accounting_id) as any
+    expect(accEntry.description).toContain('89634370157')
+  })
+
+  it('should not auto-match when multiple accounting records share the same havale paren number', () => {
+    db.prepare(`
+      INSERT INTO bank_transactions (file_id, row_number, date_jalali, deposit_amount, withdrawal_amount, description, tx_type, status)
+      VALUES (1, 994, '1405/06/21', 60000000, 0, 'واریز شبا 555000', 'transfer', 'unmatched')
+    `).run()
+    const bankId = (db.prepare('SELECT last_insert_rowid() as id').get() as any).id
+
+    db.prepare(`
+      INSERT INTO accounting_entries (file_id, entry_id, date_jalali, debit, credit, description, entry_type, status)
+      VALUES 
+      (2, 9121, '1405/06/21', 60000000, 0, 'سند دریافت(6001) حواله (555000) کشاورزی - فاکتور الف', 'receipt', 'unmatched'),
+      (2, 9122, '1405/06/21', 60000000, 0, 'سند دریافت(6002) حواله (555000) کشاورزی - فاکتور ب', 'receipt', 'unmatched')
+    `).run()
+
+    const res = reconciler.reconcile()
+    expect(res.ok).toBe(true)
+
+    const link = db.prepare('SELECT * FROM reconciliation_links WHERE bank_tx_id = ?').get(bankId) as any
+    expect(link).toBeDefined()
+    // Ambiguous havale numbers fall through to the suggestion flow
+    expect(link.match_type).toBe(MatchType.Suggested)
+  })
+
   it('should create suggestion for ambiguous unresolvable records without marking matched', () => {
     db.prepare(`
       INSERT INTO bank_transactions (file_id, row_number, date_jalali, deposit_amount, withdrawal_amount, description, tx_type, status)

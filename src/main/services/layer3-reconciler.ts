@@ -104,21 +104,45 @@ export class Layer3Reconciler {
         let resolvedConfidence = 1.0
         let isSuggested = false
 
-        // Sub-rule b: SHABA / Havale trailing digits
+        // Sub-rule b: Havale paren-group numbers — search the numbers in the
+        // accounting's havale paren group (e.g. 'حواله پرداختی (061809)' or
+        // 'حواله (0079347 8963437 89634370157)') inside the bank text.
+        // Auto-match only when exactly one candidate contains a number.
+        const bankText = [bankTx.reference, bankTx.depositRef, bankTx.description]
+          .filter((t): t is string => !!t)
+          .join(' ')
+        const havaleHits: AccountingEntryCandidate[] = []
         for (const candidate of nonNarenjMatches) {
-          const accHavale = this.extractHavaleDigits(candidate.description)
-          const bankRefDigits = this.extractBankRefDigits(bankTx)
+          const accHavaleNumbers = this.extractHavaleParenNumbers(candidate.description)
+          if (accHavaleNumbers.length === 0) continue
+          if (accHavaleNumbers.some(num => this.bankTextContainsNumber(bankText, num))) {
+            havaleHits.push(candidate)
+          }
+        }
+        if (havaleHits.length === 1) {
+          resolvedMatch = havaleHits[0]
+          resolvedConfidence = 0.85
+        }
+        const havaleAmbiguous = havaleHits.length > 1
 
-          if (accHavale && bankRefDigits) {
-            const minLen = 4
-            if (
-              accHavale.length >= minLen &&
-              bankRefDigits.length >= minLen &&
-              (bankRefDigits.endsWith(accHavale) || accHavale.endsWith(bankRefDigits))
-            ) {
-              resolvedMatch = candidate
-              resolvedConfidence = 0.85
-              break
+        // Sub-rule b2: Legacy havale trailing digits (no paren group found
+        // above, and paren search was not ambiguous)
+        if (!resolvedMatch && !havaleAmbiguous) {
+          for (const candidate of nonNarenjMatches) {
+            const accHavale = this.extractHavaleDigits(candidate.description)
+            const bankRefDigits = this.extractBankRefDigits(bankTx)
+
+            if (accHavale && bankRefDigits) {
+              const minLen = 4
+              if (
+                accHavale.length >= minLen &&
+                bankRefDigits.length >= minLen &&
+                (bankRefDigits.endsWith(accHavale) || accHavale.endsWith(bankRefDigits))
+              ) {
+                resolvedMatch = candidate
+                resolvedConfidence = 0.85
+                break
+              }
             }
           }
         }
@@ -229,9 +253,36 @@ export class Layer3Reconciler {
     return result.changes > 0
   }
 
+  /**
+   * Extracts all numbers found in the paren group after a havale keyword.
+   * Handles real formats: 'حواله (803392)', 'حواله پرداختی (061809)',
+   * 'حواله (0079347 8963437 89634370157)' (multi-number groups).
+   * Requires a literal '(' after the havale keyword so plain references
+   * like 'حواله شماره 061809' are not captured here.
+   */
+  private extractHavaleParenNumbers(description: string | null): string[] {
+    if (!description) return []
+    const match = description.match(/حواله[^()]*\(([^)]+)\)/)
+    if (!match) return []
+    return match[1].split(/\s+/).filter(Boolean)
+  }
+
+  /**
+   * True when `num` appears in `bankText` at the end of a digit run
+   * (nothing but non-digits after it), so a short paren number such as
+   * '8963437' does not false-match inside a longer bank ref like
+   * '89634370157', while real suffix refs like '267303' inside
+   * '140506030162267303' still match.
+   */
+  private bankTextContainsNumber(bankText: string, num: string): boolean {
+    if (!num || !bankText) return false
+    const escaped = num.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    return new RegExp(escaped + '(?![0-9])').test(bankText)
+  }
+
   private extractHavaleDigits(description: string | null): string | null {
     if (!description) return null
-    const match = description.match(/حواله\s*\(?([0-9]+)\)?/)
+    const match = description.match(/حواله\s*\(?\s*([0-9]+)\s*\)?/)
     return match ? match[1] : null
   }
 
