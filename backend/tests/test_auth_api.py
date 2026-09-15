@@ -50,7 +50,22 @@ def test_me_requires_token(client):
 def test_me_with_token(client, auth_headers):
     resp = client.get("/api/auth/me", headers=auth_headers)
     assert resp.status_code == 200
-    assert resp.json()["username"] == "admin"
+    body = resp.json()
+    assert body["username"] == "admin"
+    assert "reconciliation" in body["permissions"]
+
+
+def test_permissions_admin_has_all_modules(client, auth_headers):
+    from app.core.permissions import MODULES
+
+    resp = client.get("/api/auth/me", headers=auth_headers)
+    assert sorted(resp.json()["permissions"]) == sorted(MODULES)
+
+
+def test_permissions_unknown_role_gets_none():
+    from app.core.permissions import permissions_for_role
+
+    assert permissions_for_role("nonexistent-role") == []
 
 
 def test_refresh_flow(client):

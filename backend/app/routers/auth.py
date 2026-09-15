@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.deps import get_current_user, rate_limit_login
+from app.core.permissions import permissions_for_role
 from app.core.redis import get_redis
 from app.core.security import (
     REFRESH_TOKEN_TYPE,
@@ -62,7 +63,12 @@ def refresh(payload: RefreshRequest, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserOut)
 def me(user: User = Depends(get_current_user)):
-    return user
+    return UserOut(
+        id=user.id,
+        username=user.username,
+        role=user.role,
+        permissions=permissions_for_role(user.role),
+    )
 
 
 @router.post("/logout")

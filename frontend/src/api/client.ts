@@ -22,6 +22,14 @@ export function getAccessToken(): string | null {
   return localStorage.getItem(ACCESS_KEY)
 }
 
+export function getAccessTokenSafe(): string | null {
+  try {
+    return localStorage.getItem(ACCESS_KEY)
+  } catch {
+    return null
+  }
+}
+
 api.interceptors.request.use((config) => {
   const token = getAccessToken()
   if (token) config.headers.Authorization = `Bearer ${token}`

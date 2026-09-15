@@ -6,8 +6,8 @@
       :class="{ hidden: !sidebarOpen }"
     >
       <div class="px-5 py-5 border-b border-slate-800">
-        <div class="text-lg font-bold text-white">پنل مدیریت نارنج</div>
-        <div class="text-xs text-slate-400 mt-1">سامانه یکپارچه مدیریتی</div>
+        <div class="text-lg font-bold text-white">پنل مغایرت یابی سیستم‌ها</div>
+        <div class="text-xs text-slate-400 mt-1">سیستم مغایرت‌گیری حساب‌های بانکی</div>
       </div>
 
       <nav class="flex-1 overflow-y-auto py-3">
@@ -36,9 +36,18 @@
     <!-- Main -->
     <div class="flex-1 flex flex-col min-w-0">
       <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
-        <button class="md:hidden btn-secondary !px-2 !py-1" @click="sidebarOpen = !sidebarOpen">
-          ☰
-        </button>
+        <div class="flex items-center gap-2">
+          <button class="md:hidden btn-secondary !px-2 !py-1" @click="sidebarOpen = !sidebarOpen">
+            ☰
+          </button>
+          <button
+            class="btn-secondary !py-1 text-xs"
+            title="بازگشت به داشبورد اصلی"
+            @click="$router.push('/')"
+          >
+            ← داشبورد اصلی
+          </button>
+        </div>
         <h1 class="text-base font-semibold text-slate-800">{{ pageTitle }}</h1>
         <div class="text-xs text-slate-500">{{ today }}</div>
       </header>
@@ -73,7 +82,7 @@ const reconItems = [
 
 const pageTitle = computed(() => {
   const item = reconItems.find((i) => i.to === route.path)
-  return item ? item.label : 'پنل مدیریت'
+  return item ? item.label : 'پنل مغایرت یابی سیستم‌ها'
 })
 
 const roleLabel = computed(

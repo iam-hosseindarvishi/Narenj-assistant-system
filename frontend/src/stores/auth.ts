@@ -1,15 +1,25 @@
 import { defineStore } from 'pinia'
 import { api, setTokens, clearTokens, getAccessToken } from '../api/client'
 
+export interface UserInfo {
+  id: number
+  username: string
+  role: string
+  permissions: string[]
+}
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    user: null as { id: number; username: string; role: string } | null,
+    user: null as UserInfo | null,
     loading: false
   }),
   getters: {
     isAuthenticated: (state) => !!state.user && !!getAccessToken(),
     isAdmin: (state) => state.user?.role === 'admin',
-    canEdit: (state) => state.user?.role === 'admin' || state.user?.role === 'operator'
+    canEdit: (state) => state.user?.role === 'admin' || state.user?.role === 'operator',
+    /** Whether the user may enter a named system module (admin always can). */
+    hasModule: (state) => (moduleId: string) =>
+      state.user?.role === 'admin' || (state.user?.permissions ?? []).includes(moduleId)
   },
   actions: {
     async login(username: string, password: string) {

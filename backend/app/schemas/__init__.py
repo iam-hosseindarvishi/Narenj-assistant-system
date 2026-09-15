@@ -1,6 +1,8 @@
 """Pydantic schemas for API requests/responses."""
 from pydantic import BaseModel, Field
 
+from app.core.permissions import permissions_for_role
+
 
 # -- auth ----------------------------------------------------------------------
 class LoginRequest(BaseModel):
@@ -23,6 +25,7 @@ class UserOut(BaseModel):
     id: int
     username: str
     role: str
+    permissions: list[str] = []
 
     class Config:
         from_attributes = True
