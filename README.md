@@ -1,54 +1,70 @@
 # Narenj Financial Reconciliation System
 
-Desktop application for reconciling POS transactions, Keshavarzi bank statements, and Mohkam accounting records across four reconciliation layers.
+Financial reconciliation for Keshavarzi Bank branches: POS transactions, bank statements, and Mohkam accounting records, matched across four reconciliation layers.
 
-## Features
+## Two editions
 
-- Persian RTL interface built with Vue 3 and Vuetify 3
-- Excel `.xls` and `.xlsx` import using configurable templates
-- Four-layer reconciliation for POS, bank, fees, and accounting records
-- Manual matching, users, audit trail, and PDF/Excel reporting
-- Electron desktop packaging for Windows NSIS, macOS DMG, and Linux AppImage
+| | Desktop (Electron) | Full stack (Docker) |
+|---|---|---|
+| Backend | Electron main process (TypeScript) | FastAPI (Python) |
+| Database | SQLite | PostgreSQL 16 |
+| Cache / sessions | in-memory | Redis 7 |
+| UI | Vue 3 + Vuetify (app window) | Vue 3 + Tailwind (admin panel in browser) |
+| Access | single machine | any client on the network |
 
-## Development setup
+Both share the same domain logic and produce the same reconciliation results (verified by fixture parity tests).
 
-Requirements: Node.js 20 or newer and npm.
+## Full-stack deployment (Docker)
+
+```bash
+cp .env.example .env   # adjust JWT_SECRET and admin credentials
+docker compose up -d --build
+```
+
+Services:
+
+- **panel** — http://localhost:8080 (Vue 3 + Tailwind, RTL) — open from any machine at `http://<host-ip>:8080`
+- **backend API** — http://localhost:8000/api (FastAPI, docs at `/api/docs`)
+- **PostgreSQL** on the internal network (volume `pgdata`)
+- **Redis** — JWT blacklist, rate limiting
+
+First start creates the schema and seeds the four import templates plus the admin user (`ADMIN_USERNAME` / `ADMIN_PASSWORD`, default `admin` / `admin123`).
+
+### Admin panel
+
+After login the sidebar shows **«مغایرت یابی بانکی»** (bank reconciliation) containing the current project:
+
+- داشبورد (dashboard with layer stats and run-all)
+- ورود اطلاعات (import): Excel file upload **or** clipboard paste (TSV/CSV from Excel)
+- لایه ۱–۴: per-layer result views with run buttons
+- تطبیق دستی (manual matching + suggestion accept/reject)
+- گزارش‌ها (reports + Excel export) و حسابرسی (audit log)
+
+The panel is designed as a general admin shell — future modules slot into the sidebar next to the reconciliation section.
+
+### Backend tests
+
+```bash
+docker compose exec backend python -m pytest -q
+```
+
+40 tests cover adapters, the Jalali date utils, the Layer-3 havale-paren disambiguation rule, layer parity against the real fixtures (L1 = 45, POS detail = 1120 rows), clipboard import, and the auth API.
+
+## Desktop edition (original Electron app)
 
 ```bash
 npm install
-npm run dev
+npm run dev      # development
+npm test         # vitest
+npm run package  # electron-builder → release/
 ```
 
-Run verification and production builds with:
+Project layout:
 
-```bash
-npm test
-npm run lint
-npm run build
-npm run package
-```
-
-Package artifacts are written to `release/`. The application stores its SQLite database in Electron's per-user application data directory.
-
-## Stack
-
-- Electron
-- Vue 3, Vite, TypeScript
-- Vuetify 3 and Pinia
-- better-sqlite3
-- SheetJS (`xlsx`)
-- jalaali-js
-- Vitest
-- electron-builder
-
-## Project layout
-
-- `src/main/`: Electron main process, database, importers, reconciliation, authentication, and audit services
-- `src/renderer/`: Vue application and views
-- `src/shared/`: shared types, constants, and Jalali date utilities
-- `migrations/`: SQLite schema migrations
-- `tests/`: unit tests
-- `docs/user-guide-fa.md`: Persian user guide
+- `backend/`: FastAPI app (core, models, adapters, services, routers), tests
+- `frontend/`: Vue 3 + Tailwind admin panel
+- `src/`: Electron desktop app (main process, renderer, shared)
+- `docker-compose.yml`, `backend/Dockerfile`, `frontend/Dockerfile`: full-stack deployment
 
 ## License
 
