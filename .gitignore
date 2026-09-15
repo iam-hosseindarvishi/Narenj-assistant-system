@@ -1,23 +1,25 @@
 # Sensitive / excluded from git
 exelcs inputs/
-CLAUDE.md
 tasks/
+
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
 
 # Node
 node_modules/
-dist/
-.env
-*.log
+frontend/dist/
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Electron
-out/
-release/
-release-fresh/
-
-# SQLite DB (built at runtime)
+# Runtime
+*.log
 *.db
 *.db-journal
