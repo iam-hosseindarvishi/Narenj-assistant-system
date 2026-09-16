@@ -1,15 +1,15 @@
 <template>
   <div class="space-y-4">
     <div class="flex items-center justify-between">
-      <div class="text-sm text-slate-500">تطبیق دستی رکوردهای باقی‌مانده و بررسی پیشنهادها</div>
+      <div class="text-sm text-slate-500 dark:text-slate-400">تطبیق دستی رکوردهای باقی‌مانده و بررسی پیشنهادها</div>
       <button class="btn-secondary" :disabled="loading" @click="load">
         {{ loading ? '...' : 'بازخوانی' }}
       </button>
     </div>
 
     <!-- Suggestions -->
-    <div v-if="suggestions.length" class="card border border-amber-300">
-      <h2 class="font-semibold text-slate-800 mb-3">پیشنهادهای در انتظار تأیید</h2>
+    <div v-if="suggestions.length" class="card border border-amber-300 dark:border-amber-500/50">
+      <h2 class="font-semibold text-slate-800 dark:text-slate-100 mb-3">پیشنهادهای در انتظار تأیید</h2>
       <div class="overflow-x-auto">
         <table class="table-base">
           <thead>
@@ -42,7 +42,7 @@
     <!-- Selection lists -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div class="card">
-        <h2 class="font-semibold text-slate-800 mb-3">تراکنش‌های بانک (تطبیق‌نشده)</h2>
+        <h2 class="font-semibold text-slate-800 dark:text-slate-100 mb-3">تراکنش‌های بانک (تطبیق‌نشده)</h2>
         <div class="overflow-x-auto max-h-80">
           <table class="table-base">
             <thead>
@@ -58,7 +58,7 @@
                 <td class="max-w-[200px] truncate">{{ r.label }}</td>
               </tr>
               <tr v-if="!bankRows.length">
-                <td colspan="4" class="text-center text-slate-400 py-3">موردی نیست</td>
+                <td colspan="4" class="text-center text-slate-400 dark:text-slate-500 py-3">موردی نیست</td>
               </tr>
             </tbody>
           </table>
@@ -66,7 +66,7 @@
       </div>
 
       <div class="card">
-        <h2 class="font-semibold text-slate-800 mb-3">آرتیکل‌های حسابداری (تطبیق‌نشده)</h2>
+        <h2 class="font-semibold text-slate-800 dark:text-slate-100 mb-3">آرتیکل‌های حسابداری (تطبیق‌نشده)</h2>
         <div class="overflow-x-auto max-h-80">
           <table class="table-base">
             <thead>
@@ -82,7 +82,7 @@
                 <td class="max-w-[200px] truncate">{{ r.label }}</td>
               </tr>
               <tr v-if="!accRows.length">
-                <td colspan="4" class="text-center text-slate-400 py-3">موردی نیست</td>
+                <td colspan="4" class="text-center text-slate-400 dark:text-slate-500 py-3">موردی نیست</td>
               </tr>
             </tbody>
           </table>
@@ -95,7 +95,7 @@
         {{ linking ? 'در حال اتصال...' : 'اتصال انتخاب‌شده‌ها' }}
       </button>
     </div>
-    <div v-if="message" class="text-sm" :class="ok ? 'text-emerald-700' : 'text-red-600'">{{ message }}</div>
+    <div v-if="message" class="text-sm" :class="ok ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">{{ message }}</div>
   </div>
 </template>
 

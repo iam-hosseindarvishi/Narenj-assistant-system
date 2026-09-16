@@ -9,6 +9,8 @@ from sqlalchemy.pool import StaticPool
 os.environ.setdefault("JWT_SECRET", "test-secret")
 os.environ.setdefault("ADMIN_USERNAME", "admin")
 os.environ.setdefault("ADMIN_PASSWORD", "admin123")
+# Tests log in many times; disable the login rate limit for the suite.
+os.environ.setdefault("RATE_LIMIT_LOGIN_PER_MINUTE", "100000")
 
 from app.core.database import Base  # noqa: E402
 import app.models  # noqa: F401,E402 - register all models

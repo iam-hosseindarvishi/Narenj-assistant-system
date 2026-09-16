@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <div class="flex items-center justify-between">
-      <div class="text-sm text-slate-500">آمار کلی لایه‌های تطبیق</div>
+      <div class="text-sm text-slate-500 dark:text-slate-400">آمار کلی لایه‌های تطبیق</div>
       <button class="btn-primary" :disabled="running" @click="runAll">
         {{ running ? 'در حال اجرا...' : 'اجرای همه لایه‌ها' }}
       </button>
@@ -10,21 +10,21 @@
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
       <div v-for="layer in layers" :key="layer.key" class="card">
         <div class="flex items-center justify-between mb-3">
-          <div class="font-semibold text-slate-800">{{ layer.label }}</div>
+          <div class="font-semibold text-slate-800 dark:text-slate-100">{{ layer.label }}</div>
           <router-link :to="layer.route" class="text-xs text-narenj-600 hover:underline">مشاهده</router-link>
         </div>
         <div class="grid grid-cols-3 gap-2 text-center">
           <div>
             <div class="text-xl font-bold text-emerald-600">{{ stats[layer.key]?.matched ?? 0 }}</div>
-            <div class="text-[11px] text-slate-500">تطبیق‌شده</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">تطبیق‌شده</div>
           </div>
           <div>
             <div class="text-xl font-bold text-amber-600">{{ stats[layer.key]?.unmatched ?? 0 }}</div>
-            <div class="text-[11px] text-slate-500">باقی‌مانده</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">باقی‌مانده</div>
           </div>
           <div>
-            <div class="text-xl font-bold text-slate-700">{{ stats[layer.key]?.total ?? 0 }}</div>
-            <div class="text-[11px] text-slate-500">کل</div>
+            <div class="text-xl font-bold text-slate-700 dark:text-slate-200">{{ stats[layer.key]?.total ?? 0 }}</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">کل</div>
           </div>
         </div>
       </div>
@@ -33,16 +33,16 @@
     <div class="card">
       <div class="flex items-center justify-between">
         <div>
-          <div class="font-semibold text-slate-800">کارمزد ثبت‌نشده</div>
-          <div class="text-xs text-slate-500">جمع کارمزدهای روزانه‌ای که هنوز ثبت دفتری نشده‌اند</div>
+          <div class="font-semibold text-slate-800 dark:text-slate-100">کارمزد ثبت‌نشده</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">جمع کارمزدهای روزانه‌ای که هنوز ثبت دفتری نشده‌اند</div>
         </div>
         <div class="text-2xl font-bold text-narenj-600">{{ formatMoney(stats.unregisteredFeeTotal ?? 0) }}</div>
       </div>
     </div>
 
-    <div v-if="runResult" class="card text-sm text-slate-700">
+    <div v-if="runResult" class="card text-sm text-slate-700 dark:text-slate-300">
       <div class="font-semibold mb-2">نتیجه آخرین اجرا</div>
-      <pre class="bg-slate-50 rounded-lg p-3 text-xs overflow-x-auto" dir="ltr">{{ JSON.stringify(runResult, null, 2) }}</pre>
+      <pre class="bg-slate-50 dark:bg-slate-900 rounded-lg p-3 text-xs overflow-x-auto" dir="ltr">{{ JSON.stringify(runResult, null, 2) }}</pre>
     </div>
   </div>
 </template>

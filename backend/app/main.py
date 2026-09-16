@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from app.core.config import get_settings
 from app.core.database import Base, SessionLocal, engine
 from app.core.deps import rate_limit_api
-from app.routers import auth, files, reconciliation, reports, templates
+from app.routers import auth, files, reconciliation, reports, sales, templates
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("narenj")
@@ -68,3 +68,4 @@ app.include_router(templates.router, prefix="/api")
 app.include_router(files.router, prefix="/api")
 app.include_router(reconciliation.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
+app.include_router(sales.router, prefix="/api")

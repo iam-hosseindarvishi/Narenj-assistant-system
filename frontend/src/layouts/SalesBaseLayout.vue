@@ -6,23 +6,25 @@
       :class="{ hidden: !sidebarOpen }"
     >
       <div class="px-5 py-5 border-b border-slate-800">
-        <div class="text-lg font-bold text-white">پنل مغایرت یابی سیستم‌ها</div>
-        <div class="text-xs text-slate-400 mt-1">سیستم مغایرت‌گیری حساب‌های بانکی</div>
+        <div class="text-lg font-bold text-white">پنل اطلاعات پایه فروش</div>
+        <div class="text-xs text-slate-400 mt-1">ویزیتور، مشتری، گروه کالا و قواعد</div>
       </div>
 
       <nav class="flex-1 overflow-y-auto py-3">
-        <div class="px-4 pb-1 text-[11px] font-semibold text-slate-500 tracking-wide">
-          مغایرت یابی بانکی
+        <div v-for="section in sections" :key="section.title" class="mb-2">
+          <div class="px-4 pb-1 pt-2 text-[11px] font-semibold text-slate-500 tracking-wide">
+            {{ section.title }}
+          </div>
+          <router-link
+            v-for="item in section.items"
+            :key="item.to"
+            :to="item.to"
+            class="block px-4 py-2.5 text-sm hover:bg-slate-800 hover:text-white transition-colors"
+            :class="$route.path === item.to ? 'bg-slate-800 text-white border-r-2 border-narenj-500' : ''"
+          >
+            <span class="ml-2">{{ item.icon }}</span>{{ item.label }}
+          </router-link>
         </div>
-        <router-link
-          v-for="item in reconItems"
-          :key="item.to"
-          :to="item.to"
-          class="block px-4 py-2.5 text-sm hover:bg-slate-800 hover:text-white transition-colors"
-          :class="$route.path === item.to ? 'bg-slate-800 text-white border-r-2 border-narenj-500' : ''"
-        >
-          <span class="ml-2">{{ item.icon }}</span>{{ item.label }}
-        </router-link>
       </nav>
 
       <div class="px-4 py-4 border-t border-slate-800 text-xs text-slate-400">
@@ -68,21 +70,43 @@ const route = useRoute()
 const router = useRouter()
 const sidebarOpen = ref(true)
 
-const reconItems = [
-  { to: '/reconciliation/dashboard', label: 'داشبورد', icon: '📊' },
-  { to: '/reconciliation/import', label: 'ورود اطلاعات', icon: '📥' },
-  { to: '/reconciliation/layer1', label: 'لایه ۱: POS ↔ بانک', icon: '🔄' },
-  { to: '/reconciliation/layer2', label: 'لایه ۲: کارمزدها', icon: '💰' },
-  { to: '/reconciliation/layer3', label: 'لایه ۳: بانک ↔ حسابداری', icon: '🏦' },
-  { to: '/reconciliation/layer4', label: 'لایه ۴: ریز تراکنش POS', icon: '🧾' },
-  { to: '/reconciliation/manual', label: 'تطبیق دستی', icon: '✋' },
-  { to: '/reconciliation/reports', label: 'گزارش‌ها', icon: '📄' },
-  { to: '/reconciliation/audit', label: 'حسابرسی', icon: '🔍' }
+const sections = [
+  {
+    title: 'ویزیتور',
+    items: [
+      { to: '/sales-base/visitors', label: 'لیست ویزیتورها', icon: '🧑‍💼' },
+      { to: '/sales-base/routes', label: 'مسیرهای فروش', icon: '🛣️' },
+      { to: '/sales-base/weekly-plans', label: 'برنامه هفتگی', icon: '📅' },
+      { to: '/sales-base/customer-visitors', label: 'ارتباط مشتری با ویزیتور', icon: '🔗' }
+    ]
+  },
+  {
+    title: 'مشتریان',
+    items: [
+      { to: '/sales-base/customers', label: 'لیست مشتریان', icon: '🏪' },
+      { to: '/sales-base/customer-routes', label: 'مسیرهای مشتریان', icon: '📍' }
+    ]
+  },
+  {
+    title: 'گروه کالا',
+    items: [
+      { to: '/sales-base/groups', label: 'لیست گروه کالا', icon: '📦' },
+      { to: '/sales-base/group-rules', label: 'ارتباط گروه با ویزیتور', icon: '⚖️' }
+    ]
+  },
+  {
+    title: 'گزارش‌ها',
+    items: [
+      { to: '/sales-base/violations', label: 'گزارش تخلفات', icon: '🚨' }
+    ]
+  }
 ]
 
+const allItems = sections.flatMap((s) => s.items)
+
 const pageTitle = computed(() => {
-  const item = reconItems.find((i) => i.to === route.path)
-  return item ? item.label : 'پنل مغایرت یابی سیستم‌ها'
+  const item = allItems.find((i) => i.to === route.path)
+  return item ? item.label : 'پنل اطلاعات پایه فروش'
 })
 
 const roleLabel = computed(

@@ -2,11 +2,11 @@
   <div class="space-y-4">
     <div class="flex flex-wrap items-center gap-3">
       <div>
-        <label class="block text-xs text-slate-500 mb-1">از تاریخ</label>
+        <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">از تاریخ</label>
         <input v-model="dateFrom" class="input font-mono" dir="ltr" placeholder="1405-01-01" />
       </div>
       <div>
-        <label class="block text-xs text-slate-500 mb-1">تا تاریخ</label>
+        <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">تا تاریخ</label>
         <input v-model="dateTo" class="input font-mono" dir="ltr" placeholder="1405-12-29" />
       </div>
       <button class="btn-primary mt-5" :disabled="loading" @click="load">
@@ -16,7 +16,7 @@
     </div>
 
     <div v-for="sec in sections" :key="sec.title" class="card">
-      <h2 class="font-semibold text-slate-800 mb-3">{{ sec.title }}</h2>
+      <h2 class="font-semibold text-slate-800 dark:text-slate-100 mb-3">{{ sec.title }}</h2>
       <div class="overflow-x-auto">
         <table class="table-base">
           <thead>
@@ -29,7 +29,7 @@
               <td v-for="h in sec.headers" :key="h">{{ row[h] ?? '—' }}</td>
             </tr>
             <tr v-if="!sec.rows.length">
-              <td :colspan="sec.headers.length" class="text-center text-slate-400 py-4">موردی یافت نشد</td>
+              <td :colspan="sec.headers.length" class="text-center text-slate-400 dark:text-slate-500 py-4">موردی یافت نشد</td>
             </tr>
           </tbody>
         </table>

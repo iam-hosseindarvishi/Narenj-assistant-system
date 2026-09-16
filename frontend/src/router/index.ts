@@ -29,6 +29,24 @@ const router = createRouter({
         { path: 'audit', name: 'audit', component: () => import('../views/recon/AuditView.vue') }
       ]
     },
+    {
+      path: '/sales-base',
+      component: () => import('../layouts/SalesBaseLayout.vue'),
+      meta: { module: 'sales_base' },
+      children: [
+        { path: '', redirect: '/sales-base/dashboard' },
+        { path: 'dashboard', name: 'sales-dashboard', component: () => import('../views/sales/DashboardView.vue') },
+        { path: 'visitors', name: 'sales-visitors', component: () => import('../views/sales/VisitorsView.vue') },
+        { path: 'routes', name: 'sales-routes', component: () => import('../views/sales/RoutesView.vue') },
+        { path: 'weekly-plans', name: 'sales-weekly-plans', component: () => import('../views/sales/WeeklyPlansView.vue') },
+        { path: 'customer-visitors', name: 'sales-customer-visitors', component: () => import('../views/sales/CustomerVisitorsView.vue') },
+        { path: 'customers', name: 'sales-customers', component: () => import('../views/sales/CustomersView.vue') },
+        { path: 'customer-routes', name: 'sales-customer-routes', component: () => import('../views/sales/CustomerRoutesView.vue') },
+        { path: 'groups', name: 'sales-groups', component: () => import('../views/sales/GroupsView.vue') },
+        { path: 'group-rules', name: 'sales-group-rules', component: () => import('../views/sales/GroupRulesView.vue') },
+        { path: 'violations', name: 'sales-violations', component: () => import('../views/sales/ViolationsView.vue') }
+      ]
+    },
     { path: '/:pathMatch(.*)*', redirect: '/' }
   ]
 })

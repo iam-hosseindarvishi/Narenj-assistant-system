@@ -3,8 +3,8 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- File upload -->
       <div class="card">
-        <h2 class="font-semibold text-slate-800 mb-1">ورود با فایل اکسل</h2>
-        <p class="text-xs text-slate-500 mb-4">فایل‌های xls / xlsx بانک، پوز و حسابداری</p>
+        <h2 class="font-semibold text-slate-800 dark:text-slate-100 mb-1">ورود با فایل اکسل</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">فایل‌های xls / xlsx بانک، پوز و حسابداری</p>
         <div class="space-y-3">
           <select v-model.number="fileTemplateId" class="input">
             <option value="" disabled>قالب را انتخاب کنید</option>
@@ -24,8 +24,8 @@
 
       <!-- Clipboard paste -->
       <div class="card">
-        <h2 class="font-semibold text-slate-800 mb-1">ورود با کپی از اکسل</h2>
-        <p class="text-xs text-slate-500 mb-4">
+        <h2 class="font-semibold text-slate-800 dark:text-slate-100 mb-1">ورود با کپی از اکسل</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
           محدوده دلخواه را در اکسل کپی و همین‌جا Paste کنید (ستون‌ها با Tab جدا می‌شوند)
         </p>
         <div class="space-y-3">
@@ -48,13 +48,13 @@
     </div>
 
     <div v-if="message" class="rounded-xl px-4 py-3 text-sm"
-         :class="success ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-700'">
+         :class="success ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300'">
       {{ message }}
     </div>
 
     <!-- Import history -->
     <div class="card">
-      <h2 class="font-semibold text-slate-800 mb-3">تاریخچه ورود اطلاعات</h2>
+      <h2 class="font-semibold text-slate-800 dark:text-slate-100 mb-3">تاریخچه ورود اطلاعات</h2>
       <div class="overflow-x-auto">
         <table class="table-base">
           <thead>
@@ -72,7 +72,7 @@
               <td>{{ f.id }}</td>
               <td class="max-w-[280px] truncate">{{ f.originalFilename }}</td>
               <td>
-                <span class="badge" :class="f.source === 'clipboard' ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-700'">
+                <span class="badge" :class="f.source === 'clipboard' ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'">
                   {{ f.source === 'clipboard' ? 'کلیپ‌بورد' : 'فایل' }}
                 </span>
               </td>
