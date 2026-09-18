@@ -61,10 +61,6 @@
       @save="save"
     >
       <div>
-        <label class="block text-sm text-slate-600 dark:text-slate-300 mb-1">کد</label>
-        <input v-model="form.code" class="input" required />
-      </div>
-      <div>
         <label class="block text-sm text-slate-600 dark:text-slate-300 mb-1">نام</label>
         <input v-model="form.name" class="input" required />
       </div>
@@ -124,7 +120,7 @@ const saving = ref(false)
 const editing = ref<any | null>(null)
 const assigning = ref<any | null>(null)
 const assignRouteId = ref<number | ''>('')
-const form = ref({ code: '', name: '', phone: '', address: '', active: true })
+const form = ref({ name: '', phone: '', address: '', active: true })
 
 const assignableRoutes = computed(() =>
   routes.value.filter((r) => !assigning.value?.route_ids.includes(r.id))
@@ -142,13 +138,13 @@ async function load() {
 
 function openCreate() {
   editing.value = null
-  form.value = { code: '', name: '', phone: '', address: '', active: true }
+  form.value = { name: '', phone: '', address: '', active: true }
   modalOpen.value = true
 }
 
 function openEdit(c: any) {
   editing.value = c
-  form.value = { code: c.code, name: c.name, phone: c.phone || '', address: c.address || '', active: c.active }
+  form.value = { name: c.name, phone: c.phone || '', address: c.address || '', active: c.active }
   modalOpen.value = true
 }
 

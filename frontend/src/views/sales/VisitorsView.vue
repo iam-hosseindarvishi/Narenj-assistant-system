@@ -46,10 +46,6 @@
       @save="save"
     >
       <div>
-        <label class="block text-sm text-slate-600 dark:text-slate-300 mb-1">کد</label>
-        <input v-model="form.code" class="input" required />
-      </div>
-      <div>
         <label class="block text-sm text-slate-600 dark:text-slate-300 mb-1">نام و نام خانوادگی</label>
         <input v-model="form.full_name" class="input" required />
       </div>
@@ -81,7 +77,7 @@ const visitors = ref<any[]>([])
 const modalOpen = ref(false)
 const saving = ref(false)
 const editing = ref<any | null>(null)
-const form = ref({ code: '', full_name: '', phone: '', active: true })
+const form = ref({ full_name: '', phone: '', active: true })
 
 async function load() {
   visitors.value = (await api.get('/sales/visitors')).data
@@ -89,13 +85,13 @@ async function load() {
 
 function openCreate() {
   editing.value = null
-  form.value = { code: '', full_name: '', phone: '', active: true }
+  form.value = { full_name: '', phone: '', active: true }
   modalOpen.value = true
 }
 
 function openEdit(v: any) {
   editing.value = v
-  form.value = { code: v.code, full_name: v.full_name, phone: v.phone || '', active: v.active }
+  form.value = { full_name: v.full_name, phone: v.phone || '', active: v.active }
   modalOpen.value = true
 }
 

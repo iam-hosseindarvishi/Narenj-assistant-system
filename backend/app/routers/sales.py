@@ -28,7 +28,8 @@ WEEKDAY_NAMES = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", 
 
 # -- visitors ---------------------------------------------------------------------
 class VisitorIn(BaseModel):
-    code: str = Field(min_length=1, max_length=50)
+    # code is optional: when omitted, it is generated from the DB autoincrement id.
+    code: str = Field(default="", max_length=50)
     full_name: str = Field(min_length=1, max_length=200)
     phone: str | None = Field(default=None, max_length=50)
     active: bool = True
@@ -53,10 +54,14 @@ def list_visitors(db: Session = Depends(get_db)):
 
 @router.post("/visitors", dependencies=[Depends(require_operator)], status_code=201)
 def create_visitor(payload: VisitorIn, db: Session = Depends(get_db)):
-    if db.execute(select(Visitor).where(Visitor.code == payload.code)).scalar_one_or_none():
+    code = payload.code.strip()
+    if code and db.execute(select(Visitor).where(Visitor.code == code)).scalar_one_or_none():
         raise HTTPException(status_code=409, detail="کد ویزیتور تکراری است")
-    v = Visitor(**payload.model_dump())
+    v = Visitor(code=code, **payload.model_dump(exclude={"code"}))
     db.add(v)
+    db.flush()  # DB autoincrement assigns the id
+    if not code:
+        v.code = f"V-{v.id}"
     db.commit()
     return visitor_out(v)
 
@@ -88,7 +93,7 @@ def delete_visitor(visitor_id: int, db: Session = Depends(get_db)):
 
 # -- routes -----------------------------------------------------------------------
 class RouteIn(BaseModel):
-    code: str = Field(min_length=1, max_length=50)
+    code: str = Field(default="", max_length=50)  # optional → auto-generated
     name: str = Field(min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=500)
     active: bool = True
@@ -113,10 +118,14 @@ def list_routes(db: Session = Depends(get_db)):
 
 @router.post("/routes", dependencies=[Depends(require_operator)], status_code=201)
 def create_route(payload: RouteIn, db: Session = Depends(get_db)):
-    if db.execute(select(SalesRoute).where(SalesRoute.code == payload.code)).scalar_one_or_none():
+    code = payload.code.strip()
+    if code and db.execute(select(SalesRoute).where(SalesRoute.code == code)).scalar_one_or_none():
         raise HTTPException(status_code=409, detail="کد مسیر تکراری است")
-    r = SalesRoute(**payload.model_dump())
+    r = SalesRoute(code=code, **payload.model_dump(exclude={"code"}))
     db.add(r)
+    db.flush()
+    if not code:
+        r.code = f"R-{r.id}"
     db.commit()
     return route_out(r)
 
@@ -206,7 +215,7 @@ def delete_weekly_plan(visitor_id: int, db: Session = Depends(get_db)):
 
 # -- customers ----------------------------------------------------------------------
 class CustomerIn(BaseModel):
-    code: str = Field(min_length=1, max_length=50)
+    code: str = Field(default="", max_length=50)  # optional → auto-generated
     name: str = Field(min_length=1, max_length=200)
     phone: str | None = Field(default=None, max_length=50)
     address: str | None = Field(default=None, max_length=500)
@@ -237,10 +246,14 @@ def list_customers(db: Session = Depends(get_db)):
 
 @router.post("/customers", dependencies=[Depends(require_operator)], status_code=201)
 def create_customer(payload: CustomerIn, db: Session = Depends(get_db)):
-    if db.execute(select(Customer).where(Customer.code == payload.code)).scalar_one_or_none():
+    code = payload.code.strip()
+    if code and db.execute(select(Customer).where(Customer.code == code)).scalar_one_or_none():
         raise HTTPException(status_code=409, detail="کد مشتری تکراری است")
-    c = Customer(**payload.model_dump())
+    c = Customer(code=code, **payload.model_dump(exclude={"code"}))
     db.add(c)
+    db.flush()
+    if not code:
+        c.code = f"C-{c.id}"
     db.commit()
     return customer_out(c)
 
@@ -375,7 +388,7 @@ def unlink_customer_visitor(row_id: int, db: Session = Depends(get_db)):
 
 # -- product groups -------------------------------------------------------------------
 class GroupIn(BaseModel):
-    code: str = Field(min_length=1, max_length=50)
+    code: str = Field(default="", max_length=50)  # optional → auto-generated
     name: str = Field(min_length=1, max_length=200)
 
 
@@ -396,10 +409,14 @@ def list_groups(db: Session = Depends(get_db)):
 
 @router.post("/groups", dependencies=[Depends(require_operator)], status_code=201)
 def create_group(payload: GroupIn, db: Session = Depends(get_db)):
-    if db.execute(select(ProductGroup).where(ProductGroup.code == payload.code)).scalar_one_or_none():
+    code = payload.code.strip()
+    if code and db.execute(select(ProductGroup).where(ProductGroup.code == code)).scalar_one_or_none():
         raise HTTPException(status_code=409, detail="کد گروه تکراری است")
-    g = ProductGroup(**payload.model_dump())
+    g = ProductGroup(code=code, **payload.model_dump(exclude={"code"}))
     db.add(g)
+    db.flush()
+    if not code:
+        g.code = f"G-{g.id}"
     db.commit()
     return group_out(g)
 

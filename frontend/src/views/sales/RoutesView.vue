@@ -46,10 +46,6 @@
       @save="save"
     >
       <div>
-        <label class="block text-sm text-slate-600 dark:text-slate-300 mb-1">کد</label>
-        <input v-model="form.code" class="input" required />
-      </div>
-      <div>
         <label class="block text-sm text-slate-600 dark:text-slate-300 mb-1">نام مسیر</label>
         <input v-model="form.name" class="input" required />
       </div>
@@ -81,7 +77,7 @@ const routes = ref<any[]>([])
 const modalOpen = ref(false)
 const saving = ref(false)
 const editing = ref<any | null>(null)
-const form = ref({ code: '', name: '', description: '', active: true })
+const form = ref({ name: '', description: '', active: true })
 
 async function load() {
   routes.value = (await api.get('/sales/routes')).data
@@ -89,13 +85,13 @@ async function load() {
 
 function openCreate() {
   editing.value = null
-  form.value = { code: '', name: '', description: '', active: true }
+  form.value = { name: '', description: '', active: true }
   modalOpen.value = true
 }
 
 function openEdit(r: any) {
   editing.value = r
-  form.value = { code: r.code, name: r.name, description: r.description || '', active: r.active }
+  form.value = { name: r.name, description: r.description || '', active: r.active }
   modalOpen.value = true
 }
 

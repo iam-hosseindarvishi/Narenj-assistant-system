@@ -41,10 +41,6 @@
       @save="save"
     >
       <div>
-        <label class="block text-sm text-slate-600 dark:text-slate-300 mb-1">کد</label>
-        <input v-model="form.code" class="input" required />
-      </div>
-      <div>
         <label class="block text-sm text-slate-600 dark:text-slate-300 mb-1">نام گروه</label>
         <input v-model="form.name" class="input" required />
       </div>
@@ -77,7 +73,7 @@ const modalOpen = ref(false)
 const bulkOpen = ref(false)
 const saving = ref(false)
 const editing = ref<any | null>(null)
-const form = ref({ code: '', name: '' })
+const form = ref({ name: '' })
 const bulkText = ref('')
 
 async function load() {
@@ -86,13 +82,13 @@ async function load() {
 
 function openCreate() {
   editing.value = null
-  form.value = { code: '', name: '' }
+  form.value = { name: '' }
   modalOpen.value = true
 }
 
 function openEdit(g: any) {
   editing.value = g
-  form.value = { code: g.code, name: g.name }
+  form.value = { name: g.name }
   modalOpen.value = true
 }
 

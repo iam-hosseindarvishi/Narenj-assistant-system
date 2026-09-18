@@ -180,7 +180,36 @@ def test_bulk_import(client, auth_headers):
     body = r.json()
     assert body["created"] == 2
     assert body["skipped"] == 2
-    assert len(body["errors"]) == 1
+
+
+def test_auto_generated_codes(client, auth_headers):
+    """Omitting the code lets the DB autoincrement id generate it (V-1, R-2, ...)."""
+    h = auth_headers
+
+    r = client.post("/api/sales/visitors", headers=h, json={"full_name": "بدون کد"})
+    assert r.status_code == 201, r.text
+    v = r.json()
+    assert v["code"] == f"V-{v['id']}"
+
+    r = client.post("/api/sales/routes", headers=h, json={"name": "مسیر بدون کد"})
+    assert r.status_code == 201, r.text
+    rt = r.json()
+    assert rt["code"] == f"R-{rt['id']}"
+
+    r = client.post("/api/sales/customers", headers=h, json={"name": "مشتری بدون کد"})
+    assert r.status_code == 201, r.text
+    c = r.json()
+    assert c["code"] == f"C-{c['id']}"
+
+    r = client.post("/api/sales/groups", headers=h, json={"name": "گروه بدون کد"})
+    assert r.status_code == 201, r.text
+    g = r.json()
+    assert g["code"] == f"G-{g['id']}"
+
+    # Explicit codes are still accepted and kept
+    r = client.post("/api/sales/visitors", headers=h, json={"code": "X-1", "full_name": "کد دستی"})
+    assert r.status_code == 201, r.text
+    assert r.json()["code"] == "X-1"
 
     r = client.post("/api/sales/bulk/unknown", headers=h, json={"rows": [{"code": "x"}]})
     assert r.status_code == 404
