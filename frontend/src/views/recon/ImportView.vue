@@ -90,6 +90,8 @@
         </table>
       </div>
     </div>
+
+    <ConfirmModal v-if="confirmOpen" :message="confirmMessage" :busy="confirmBusy" @confirm="doConfirm" @cancel="cancel" />
   </div>
 </template>
 
@@ -97,8 +99,11 @@
 import { onMounted, ref } from 'vue'
 import { api } from '../../api/client'
 import { useAuthStore } from '../../stores/auth'
+import ConfirmModal from '../../components/ConfirmModal.vue'
+import { useConfirm } from '../../composables/useConfirm'
 
 const auth = useAuthStore()
+const { confirmOpen, confirmMessage, confirmBusy, confirmAction, doConfirm, cancel } = useConfirm()
 const templates = ref<any[]>([])
 const files = ref<any[]>([])
 
@@ -161,10 +166,11 @@ async function paste() {
   }
 }
 
-async function remove(id: number) {
-  if (!confirm('همه رکوردهای این فایل حذف شوند؟')) return
-  await api.delete(`/files/${id}`)
-  await loadAll()
+function remove(id: number) {
+  confirmAction('همه رکوردهای این فایل حذف شوند؟', async () => {
+    await api.delete(`/files/${id}`)
+    await loadAll()
+  })
 }
 
 onMounted(loadAll)

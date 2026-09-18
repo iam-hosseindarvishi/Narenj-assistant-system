@@ -49,6 +49,8 @@
         </select>
       </div>
     </CrudModal>
+
+    <ConfirmModal v-if="confirmOpen" :message="confirmMessage" :busy="confirmBusy" @confirm="doConfirm" @cancel="cancel" />
   </div>
 </template>
 
@@ -57,8 +59,11 @@ import { onMounted, ref } from 'vue'
 import { api } from '../../api/client'
 import { useAuthStore } from '../../stores/auth'
 import CrudModal from '../../components/CrudModal.vue'
+import ConfirmModal from '../../components/ConfirmModal.vue'
+import { useConfirm } from '../../composables/useConfirm'
 
 const auth = useAuthStore()
+const { confirmOpen, confirmMessage, confirmBusy, confirmAction, doConfirm, cancel } = useConfirm()
 const links = ref<any[]>([])
 const customers = ref<any[]>([])
 const visitors = ref<any[]>([])
@@ -91,14 +96,11 @@ async function save() {
   }
 }
 
-async function remove(row: any) {
-  if (!confirm(`حذف ارتباط «${row.customer_name}» و «${row.visitor_name}»؟`)) return
-  try {
+function remove(row: any) {
+  confirmAction(`حذف ارتباط «${row.customer_name}» و «${row.visitor_name}»؟`, async () => {
     await api.delete(`/sales/customer-visitors/${row.id}`)
     await load()
-  } catch (e: any) {
-    alert(e.response?.data?.detail || 'خطا در حذف')
-  }
+  })
 }
 
 onMounted(load)

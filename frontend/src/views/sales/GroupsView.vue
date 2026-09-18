@@ -57,6 +57,8 @@
       </p>
       <textarea v-model="bulkText" class="input font-mono" rows="8" dir="ltr"></textarea>
     </CrudModal>
+
+    <ConfirmModal v-if="confirmOpen" :message="confirmMessage" :busy="confirmBusy" @confirm="doConfirm" @cancel="cancel" />
   </div>
 </template>
 
@@ -65,8 +67,11 @@ import { onMounted, ref } from 'vue'
 import { api } from '../../api/client'
 import { useAuthStore } from '../../stores/auth'
 import CrudModal from '../../components/CrudModal.vue'
+import ConfirmModal from '../../components/ConfirmModal.vue'
+import { useConfirm } from '../../composables/useConfirm'
 
 const auth = useAuthStore()
+const { confirmOpen, confirmMessage, confirmBusy, confirmAction, doConfirm, cancel } = useConfirm()
 const groups = ref<any[]>([])
 const modalOpen = ref(false)
 const bulkOpen = ref(false)
@@ -140,14 +145,11 @@ async function bulkSave() {
   }
 }
 
-async function remove(g: any) {
-  if (!confirm(`حذف گروه «${g.name}»؟ قواعد مرتبط هم حذف می‌شود.`)) return
-  try {
+function remove(g: any) {
+  confirmAction(`حذف گروه «${g.name}»؟ قواعد مرتبط هم حذف می‌شود.`, async () => {
     await api.delete(`/sales/groups/${g.id}`)
     await load()
-  } catch (e: any) {
-    alert(e.response?.data?.detail || 'خطا در حذف')
-  }
+  })
 }
 
 onMounted(load)

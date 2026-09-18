@@ -127,11 +127,10 @@ def test_customer_links_and_rules(client, auth_headers):
     assert any(x["id"] == rid or x["group_name"] == "گروه الف" for x in r.json())
 
 
-def test_violation_engine(client, auth_headers):
+def test_violation_engine(client, auth_headers, db_session):
     """v2 (no right) sells g1 in the route where v1 has the exclusive right."""
     from datetime import date, timedelta
 
-    from app.core.database import SessionLocal
     from app.models.sales import Sale
 
     h = auth_headers
@@ -144,21 +143,17 @@ def test_violation_engine(client, auth_headers):
     assert r.status_code == 201
 
     today = date.today()
-    db = SessionLocal()
-    try:
-        db.add_all(
-            [
-                # Violation: v2 sells v1's group in v1's route (this week)
-                Sale(visitor_id=v2, route_id=rid, group_id=g1, amount=100, sale_date=today),
-                # Same violation but last week (out of the weekly window)
-                Sale(visitor_id=v2, route_id=rid, group_id=g1, amount=50, sale_date=today - timedelta(days=10)),
-                # v1 selling own group: fine
-                Sale(visitor_id=v1, route_id=rid, group_id=g1, amount=70, sale_date=today),
-            ]
-        )
-        db.commit()
-    finally:
-        db.close()
+    db_session.add_all(
+        [
+            # Violation: v2 sells v1's group in v1's route (this week)
+            Sale(visitor_id=v2, route_id=rid, group_id=g1, amount=100, sale_date=today),
+            # Same violation but last week (out of the weekly window)
+            Sale(visitor_id=v2, route_id=rid, group_id=g1, amount=50, sale_date=today - timedelta(days=10)),
+            # v1 selling own group: fine
+            Sale(visitor_id=v1, route_id=rid, group_id=g1, amount=70, sale_date=today),
+        ]
+    )
+    db_session.commit()
 
     r = client.post("/api/sales/violations", headers=h, json={})
     assert r.status_code == 200, r.text

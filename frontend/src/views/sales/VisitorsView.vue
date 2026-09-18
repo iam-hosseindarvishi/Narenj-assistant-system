@@ -62,6 +62,8 @@
         فعال
       </label>
     </CrudModal>
+
+    <ConfirmModal v-if="confirmOpen" :message="confirmMessage" :busy="confirmBusy" @confirm="doConfirm" @cancel="cancel" />
   </div>
 </template>
 
@@ -70,8 +72,11 @@ import { onMounted, ref } from 'vue'
 import { api } from '../../api/client'
 import { useAuthStore } from '../../stores/auth'
 import CrudModal from '../../components/CrudModal.vue'
+import ConfirmModal from '../../components/ConfirmModal.vue'
+import { useConfirm } from '../../composables/useConfirm'
 
 const auth = useAuthStore()
+const { confirmOpen, confirmMessage, confirmBusy, confirmAction, doConfirm, cancel } = useConfirm()
 const visitors = ref<any[]>([])
 const modalOpen = ref(false)
 const saving = ref(false)
@@ -111,14 +116,11 @@ async function save() {
   }
 }
 
-async function remove(v: any) {
-  if (!confirm(`حذف ویزیتور «${v.full_name}»؟ برنامه هفتگی و ارتباط‌های او هم حذف می‌شود.`)) return
-  try {
+function remove(v: any) {
+  confirmAction(`حذف ویزیتور «${v.full_name}»؟ برنامه هفتگی و ارتباط‌های او هم حذف می‌شود.`, async () => {
     await api.delete(`/sales/visitors/${v.id}`)
     await load()
-  } catch (e: any) {
-    alert(e.response?.data?.detail || 'خطا در حذف')
-  }
+  })
 }
 
 onMounted(load)

@@ -25,10 +25,10 @@
             </td>
             <td v-for="(d, i) in WEEKDAYS" :key="i" class="align-top">
               <span
-                v-for="cell in row.cells[i]"
-                :key="cell.route_id"
-                class="badge bg-narenj-100 text-narenj-700 dark:bg-narenj-900/40 dark:text-narenj-300 mr-1 mb-1 inline-block"
-              >{{ cell.route_name }}</span>
+                v-if="row.cells[i]"
+                class="badge bg-narenj-100 text-narenj-700 dark:bg-narenj-900/40 dark:text-narenj-300"
+              >{{ row.cells[i].route_name }}</span>
+              <span v-else class="text-slate-300 dark:text-slate-600">—</span>
             </td>
           </tr>
           <tr v-if="!tableRows.length">
@@ -53,21 +53,14 @@
         </select>
       </div>
       <div class="space-y-2">
-        <div class="text-sm text-slate-600 dark:text-slate-300">مسیر هر روز (می‌توانید هر روز چند مسیر انتخاب کنید):</div>
+        <div class="text-sm text-slate-600 dark:text-slate-300">مسیر هر روز (هر روز فقط یک مسیر):</div>
         <div v-for="(d, i) in WEEKDAYS" :key="i" class="flex items-center gap-2">
-          <span class="w-20 text-sm text-slate-600 dark:text-slate-300">{{ d }}:</span>
-          <div class="flex flex-wrap gap-1.5 flex-1">
-            <button
-              v-for="r in routes"
-              :key="r.id"
-              type="button"
-              class="badge border transition-colors"
-              :class="daySelection[i].includes(r.id)
-                ? 'bg-narenj-500 text-white border-narenj-500'
-                : 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-600'"
-              @click="toggleRoute(i, r.id)"
-            >{{ r.name }}</button>
-          </div>
+          <span class="w-20 text-sm text-slate-600 dark:text-slate-300 shrink-0">{{ d }}:</span>
+          <RouteCombobox
+            :routes="routes"
+            :model-value="dayRoute[i]"
+            @update:model-value="(id: number | null) => (dayRoute[i] = id)"
+          />
         </div>
       </div>
     </CrudModal>
@@ -79,6 +72,7 @@ import { computed, onMounted, ref } from 'vue'
 import { api } from '../../api/client'
 import { useAuthStore } from '../../stores/auth'
 import CrudModal from '../../components/CrudModal.vue'
+import RouteCombobox from '../../components/RouteCombobox.vue'
 
 const auth = useAuthStore()
 const WEEKDAYS = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه']
@@ -90,12 +84,12 @@ const modalOpen = ref(false)
 const saving = ref(false)
 const editingVisitor = ref<any | null>(null)
 const selectedVisitor = ref<number | ''>('')
-const daySelection = ref<number[][]>(WEEKDAYS.map(() => []))
+const dayRoute = ref<(number | null)[]>(WEEKDAYS.map(() => null))
 
 const tableRows = computed(() =>
   plans.value.map((p) => {
-    const cells: { route_id: number; route_name: string }[][] = WEEKDAYS.map(() => [])
-    for (const day of p.days) cells[day.weekday].push({ route_id: day.route_id, route_name: day.route_name })
+    const cells: { route_id: number; route_name: string }[] = WEEKDAYS.map(() => null as any)
+    for (const day of p.days) cells[day.weekday] = { route_id: day.route_id, route_name: day.route_name }
     return { visitor_id: p.visitor_id, visitor_name: `${p.visitor_name} (${p.visitor_code})`, cells }
   })
 )
@@ -114,17 +108,11 @@ async function load() {
 function openPlan(plan: any | null) {
   editingVisitor.value = plan
   selectedVisitor.value = plan ? plan.visitor_id : ''
-  daySelection.value = WEEKDAYS.map((_, i) =>
-    plan ? plan.days.filter((d: any) => d.weekday === i).map((d: any) => d.route_id) : []
-  )
+  dayRoute.value = WEEKDAYS.map((_, i) => {
+    const day = plan?.days.find((d: any) => d.weekday === i)
+    return day ? day.route_id : null
+  })
   modalOpen.value = true
-}
-
-function toggleRoute(weekday: number, routeId: number) {
-  const list = daySelection.value[weekday]
-  const idx = list.indexOf(routeId)
-  if (idx >= 0) list.splice(idx, 1)
-  else list.push(routeId)
 }
 
 async function save() {
@@ -132,11 +120,11 @@ async function save() {
     alert('ویزیتور را انتخاب کنید')
     return
   }
-  const items = daySelection.value.flatMap((routeIds, weekday) =>
-    routeIds.map((route_id) => ({ weekday, route_id }))
-  )
+  const items = dayRoute.value
+    .map((route_id, weekday) => ({ weekday, route_id }))
+    .filter((it): it is { weekday: number; route_id: number } => it.route_id !== null)
   if (!items.length) {
-    alert('حداقل یک روز/مسیر انتخاب کنید')
+    alert('حداقل یک روز مسیر انتخاب کنید')
     return
   }
   saving.value = true
