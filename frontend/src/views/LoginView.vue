@@ -5,6 +5,9 @@
         <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">پنل مدیریت نارنج</div>
         <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">ورود به سامانه</div>
       </div>
+      <div class="flex justify-end">
+        <ThemeToggle />
+      </div>
       <form @submit.prevent="submit" class="space-y-4">
         <div>
           <label class="block text-sm text-slate-600 dark:text-slate-300 mb-1">نام کاربری</label>
@@ -27,6 +30,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import ThemeToggle from '../components/ThemeToggle.vue'
 
 const auth = useAuthStore()
 const router = useRouter()

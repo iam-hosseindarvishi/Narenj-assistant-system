@@ -49,7 +49,10 @@
           </button>
         </div>
         <h1 class="text-base font-semibold text-slate-800 dark:text-slate-100">{{ pageTitle }}</h1>
-        <div class="text-xs text-slate-500 dark:text-slate-400">{{ today }}</div>
+        <div class="flex items-center gap-2">
+          <div class="text-xs text-slate-500 dark:text-slate-400">{{ today }}</div>
+          <ThemeToggle />
+        </div>
       </header>
       <main class="flex-1 p-6 overflow-x-hidden">
         <router-view />
@@ -62,6 +65,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import ThemeToggle from '../components/ThemeToggle.vue'
 
 const auth = useAuthStore()
 const route = useRoute()

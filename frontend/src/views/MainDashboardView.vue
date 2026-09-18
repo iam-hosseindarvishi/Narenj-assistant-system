@@ -5,13 +5,7 @@
       <div class="px-5 py-3 flex items-center justify-between">
         <h1 class="text-lg font-bold text-slate-800 dark:text-slate-100">پنل مدیریت نارنج</h1>
         <div class="flex items-center gap-2">
-          <button
-            class="btn-secondary !py-1 text-xs"
-            :title="theme.isDark ? 'حالت روشن' : 'حالت تیره'"
-            @click="theme.toggle()"
-          >
-            {{ theme.isDark ? '☀️' : '🌙' }}
-          </button>
+          <ThemeToggle />
           <button class="btn-secondary !py-1 text-xs" @click="switchUser">تغییر کاربر</button>
           <button class="btn-secondary !py-1 text-xs text-red-600 dark:text-red-400" @click="doLogout">خروج</button>
         </div>
@@ -78,10 +72,9 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { useThemeStore } from '../stores/theme'
+import ThemeToggle from '../components/ThemeToggle.vue'
 
 const auth = useAuthStore()
-const theme = useThemeStore()
 const router = useRouter()
 
 const now = ref(new Date())
